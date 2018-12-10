@@ -1,0 +1,16 @@
+[submodule "envoy"]
+	path = envoy
+	url = https://github.com/ipuustin/envoy.git
+	branch = openssl-container
+[submodule "QAT_Engine"]
+	path = QAT_Engine
+	url = https://github.com/ipuustin/QAT_Engine.git
+	branch = section_name_env
+[submodule "intel-device-plugins-for-kubernetes"]
+	path = intel-device-plugins-for-kubernetes
+	url = https://github.com/rojkov/intel-device-plugins-for-kubernetes.git
+	branch = qat2
+[submodule "openssl"]
+	path = openssl
+	url = https://github.com/openssl/openssl.git
+	branch = OpenSSL_1_1_1-stable
