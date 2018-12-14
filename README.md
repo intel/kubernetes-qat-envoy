@@ -66,9 +66,18 @@ Access the proxy using curl and the same certificate:
 
 You should expect to see the nginx-provided web page source.
 
-Run the benchmark:
+In order to run benchmarks with k6 load testing tool, first create a
+container for a version which has TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+support enabled:
 
-    $ docker run --net=host -i loadimpact/k6 run --vus 10 --duration 30s -< tests/k6-test-config.js
+    $ cd k6
+    $ docker image build -t loadimpact/k6:custom -f Dockerfile .
+    $ cd ..
+
+Run the benchmark (note that you can select the cipher suite by editing
+`tests/k6-test-config.js` file):
+
+    $ docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 30s -< tests/k6-test-config.js
 
 To run benchmarks against non-accelerated setup apply this deployment config:
 
@@ -76,4 +85,4 @@ To run benchmarks against non-accelerated setup apply this deployment config:
 
 Wait until the new non-accelerated pod is running and run the same benchmark again.
 
-    $ docker run --net=host -i loadimpact/k6 run --vus 10 --duration 30s -< tests/k6-test-config.js
+    $ docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 30s -< tests/k6-test-config.js
