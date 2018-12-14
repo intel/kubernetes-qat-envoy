@@ -14,3 +14,7 @@
 	path = openssl
 	url = https://github.com/openssl/openssl.git
 	branch = OpenSSL_1_1_1-stable
+[submodule "k6"]
+	path = k6
+	url = https://github.com/ipuustin/k6.git
+	branch = TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
