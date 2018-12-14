@@ -12,7 +12,7 @@ Clone this repository with submodules:
 
 Then fetch the qat driver:
 
-    $ wget https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.2.0-00012.tar.gz
+    $ wget https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.3.0-00033.tar.gz
 
 ## Create a container for QAT-accelerated Envoy
 
