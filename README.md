@@ -69,11 +69,11 @@ validation because the common name doesn't match):
 You should expect to see the nginx-provided web page source.
 
 In order to run benchmarks with k6 load testing tool, first create a
-container for a version which has TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-support enabled:
+container for a version which has
+`TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256` support enabled:
 
     $ cd k6
-    $ docker image build -t loadimpact/k6:custom -f Dockerfile .
+    # docker image build -t loadimpact/k6:custom -f Dockerfile .
     $ cd ..
 
 Run the benchmark (note that you can select the cipher suite by editing
