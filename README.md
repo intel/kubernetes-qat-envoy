@@ -10,8 +10,9 @@ Clone this repository with submodules:
 
     $ git clone --recurse-submodules <url to this git repository>
 
-Then fetch the qat driver:
+Then go to the created directory and fetch the qat driver:
 
+    $ cd kubernetes-qat-envoy
     $ wget https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.3.0-00033.tar.gz
 
 ## Create a container for QAT-accelerated Envoy
@@ -33,12 +34,12 @@ Create a kubernetes secret out of the certificate and the key:
 # Create QAT Device Plugin daemonset
 
     $ cd intel-device-plugins-for-kubernetes
-    $ make intel-qat2-plugin # this builds a docker image with the plugin
+    # make intel-qat2-plugin # this builds a docker image with the plugin
     $ cd ..
 
 Again, you’ll need to make sure that the Docker image is available on all nodes.
 
-    $ kubectl apply -f ./deployments/qat2_plugin/qat2_plugin.yaml
+    $ kubectl apply -f ./intel-device-plugins-for-kubernetes/deployments/qat2_plugin/qat2_plugin.yaml
 
 Make sure the QAT kernel driver is configured properly on the node. For this copy the content of `configs/c6xx_devX.conf` to the node as `/etc/c6xx_dev0.conf`, `/etc/c6xx_dev1.conf` and `/etc/c6xx_dev2.conf`. After that restart the QAT driver on the node:
 
