@@ -10,5 +10,5 @@ export let options = {
 };
 
 export default function() {
-	http.get(`https://${__ENV.HELLONGINX_SERVICE_HOST}:9000`);
+	http.get("https://localhost:9000/");
 }

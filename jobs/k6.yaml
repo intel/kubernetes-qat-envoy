@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: benchmark
+spec:
+  template:
+    spec:
+      containers:
+      - name: benchmark
+        image: loadimpact/k6:custom
+        command: ["k6", "run", "--vus", "30", "--duration", "20s", "/etc/k6-config/k6-testing-config.js"]
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/k6-config
+      restartPolicy: Never
+      volumes:
+      - name: config-volume
+        configMap:
+          name: k6-config

@@ -60,8 +60,7 @@ The NodePort in this case would be `32675`.
 
 ## Test the setup with and without QAT acceleration
 
-Access the proxy using curl and the certificate (change the correct
-NodePort value to the URL):
+Access the proxy using curl and the certificate (change the correct NodePort value to the URL):
 
     $ curl --cacert cert.pem https://localhost:32675
 
@@ -75,16 +74,27 @@ container for a version which has
     # docker image build -t loadimpact/k6:custom -f Dockerfile .
     $ cd ..
 
-Edit the `tests/k6-testing-config.js` file. Set the NodePort value to
-the URL. Note that you can select the cipher suite in the configuration
-file too. Then run the benchmark:
+Edit the `tests/k6-testing-config-docker.js` file to set the test parameters.  You can among other things select the cipher suite in the file. At least replace the port `9000` in the URL with the NodePort value.  Then run the benchmark:
 
     # docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 20s -< tests/k6-testing-config.js
 
-To run benchmarks against non-accelerated setup apply this deployment config:
+To run benchmarks against non-accelerated setup apply this deployment config and run the benchmark again (after waiting for a few moments for the Pod to restart):
 
     $ kubectl apply -f deployments/nginx-behind-envoy-deployment-no-qat.yaml
 
-Wait until the new non-accelerated pod is running and run the same benchmark again.
+If you would like to run the benchmark within Kubernetes, edit `tests/k6-testing-config.js` file to set the test parameters. Do not change the URL. Then create a ConfigMap from the file:
 
-    # docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 20s -< tests/k6-testing-config.js
+    $ kubectl create configmap k6-config --from-file=tests/k6-testing-config.js
+
+Run the benchmark test (takes by default a bit over twenty seconds):
+
+    $ kubectl create -f jobs/k6.yaml
+
+After a while get the results:
+
+    $ kubectl logs jobs/benchmark
+
+Then delete the job:
+
+    $ kubectl delete job benchmark
+
