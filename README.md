@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is a technical guide for getting QAT-accelerated Envoy running on a bare-metal Kubernetes cluster. You may need to adapt some commands to your particular cluster setup.
+This is a technical guide for getting QAT-accelerated Envoy running on a bare-metal Kubernetes cluster. You may need to adapt some commands to your particular cluster setup. You need to first install the QAT driver on every node which has QAT hardware installed. The driver used in this setup is located at https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.3.0-00033.tar.gz, and the package contains a README file which explains the installation.
 
 # Clone this repository (with submodules) and fetch the QAT driver
 
@@ -10,7 +10,7 @@ Clone this repository with submodules:
 
     $ git clone --recurse-submodules <url to this git repository>
 
-Then go to the created directory and fetch the qat driver:
+Then go to the created directory and fetch the QAT driver:
 
     $ cd kubernetes-qat-envoy
     $ wget https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.3.0-00033.tar.gz
@@ -79,7 +79,7 @@ Edit the `tests/k6-testing-config.js` file. Set the NodePort value to
 the URL. Note that you can select the cipher suite in the configuration
 file too. Then run the benchmark:
 
-    # docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 30s -< tests/k6-testing-config.js
+    # docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 20s -< tests/k6-testing-config.js
 
 To run benchmarks against non-accelerated setup apply this deployment config:
 
@@ -87,4 +87,4 @@ To run benchmarks against non-accelerated setup apply this deployment config:
 
 Wait until the new non-accelerated pod is running and run the same benchmark again.
 
-    # docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 30s -< tests/k6-testing-config.js
+    # docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 20s -< tests/k6-testing-config.js
