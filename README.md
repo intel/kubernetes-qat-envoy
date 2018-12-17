@@ -57,14 +57,13 @@ Expose the deployment:
 
 ## Test the setup with and without QAT acceleration
 
-Find the NodePort address of the Envoy proxy.
+In another terminal window, forward a port from localhost to the Envoy proxy:
 
-    $ kubectl get service nginx-behind-envoy
+    $ kubectl port-forward deployment/nginx-behind-envoy 9000:9000 &> /dev/null
 
-Access the proxy using curl (note that we can't use the certificate
-validation because the common name doesn't match):
+Access the proxy using curl and the certificate:
 
-    $ curl -k https://<ip_addr>:9000
+    $ curl --cacert cert.pem https://localhost:9000
 
 You should expect to see the nginx-provided web page source.
 
@@ -79,12 +78,16 @@ container for a version which has
 Run the benchmark (note that you can select the cipher suite by editing
 `tests/k6-testing-config.js` file):
 
-    $ docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 30s -< tests/k6-testing-config.js
+    # docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 30s -< tests/k6-testing-config.js
 
 To run benchmarks against non-accelerated setup apply this deployment config:
 
-    $ kubectl apply -f nginx-behind-envoy-deployment-no-qat.yaml
+    $ kubectl apply -f deployments/nginx-behind-envoy-deployment-no-qat.yaml
+
+In the other terminal window, restart the Kubernetes port forwarding:
+
+    $ kubectl port-forward deployment/nginx-behind-envoy 9000:9000 &> /dev/null
 
 Wait until the new non-accelerated pod is running and run the same benchmark again.
 
-    $ docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 30s -< tests/k6-test-config.js
+    # docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 30s -< tests/k6-testing-config.js
