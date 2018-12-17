@@ -61,9 +61,10 @@ Find the NodePort address of the Envoy proxy.
 
     $ kubectl get service nginx-behind-envoy
 
-Access the proxy using curl and the same certificate:
+Access the proxy using curl (note that we can't use the certificate
+validation because the common name doesn't match):
 
-    $ curl --cacert cert.pem https://<ip_addr>:9000
+    $ curl -k https://<ip_addr>:9000
 
 You should expect to see the nginx-provided web page source.
 
