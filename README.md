@@ -59,7 +59,7 @@ Expose the deployment:
 
 Find the NodePort address of the Envoy proxy.
 
-    $ kubectl get service nginx-behind-proxy
+    $ kubectl get service nginx-behind-envoy
 
 Access the proxy using curl and the same certificate:
 
