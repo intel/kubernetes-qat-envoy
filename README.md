@@ -77,9 +77,9 @@ container for a version which has
     $ cd ..
 
 Run the benchmark (note that you can select the cipher suite by editing
-`tests/k6-test-config.js` file):
+`tests/k6-testing-config.js` file):
 
-    $ docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 30s -< tests/k6-test-config.js
+    $ docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 30s -< tests/k6-testing-config.js
 
 To run benchmarks against non-accelerated setup apply this deployment config:
 
