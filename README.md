@@ -25,7 +25,7 @@ Add the image to the Docker registry where all nodes in your cluster can find it
 
 Create SSL certificate and private key (note that your process for creating and signing the certificate may be different):
 
-    $ openssl req -x509 -new -batch -nodes -keyout key.pem -out cert.pem
+    $ openssl req -x509 -new -batch -nodes -subj '/CN=localhost' -keyout key.pem -out cert.pem
 
 Create a kubernetes secret out of the certificate and the key:
 
