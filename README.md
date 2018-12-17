@@ -4,7 +4,7 @@
 
 This is a technical guide for getting QAT-accelerated Envoy running on a bare-metal Kubernetes cluster. You may need to adapt some commands to your particular cluster setup. You need to first install the QAT driver on every node which has QAT hardware installed. The driver used in this setup is located at https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.3.0-00033.tar.gz, and the package contains a README file which explains the installation.
 
-# Clone this repository (with submodules) and fetch the QAT driver
+## Clone this repository (with submodules) and fetch the QAT driver
 
 Clone this repository with submodules:
 
@@ -31,7 +31,7 @@ Create a kubernetes secret out of the certificate and the key:
 
     $ kubectl create secret tls envoy-tls-secret --cert cert.pem --key key.pem
 
-# Create QAT Device Plugin daemonset
+## Create QAT Device Plugin daemonset
 
     $ cd intel-device-plugins-for-kubernetes
     # make intel-qat2-plugin # this builds a docker image with the plugin
@@ -58,7 +58,7 @@ Get the NodePort:
 
 The NodePort in this case would be `32675`.
 
-## Test the setup with and without QAT acceleration
+## Test and benchmark the setup with and without QAT acceleration
 
 Access the proxy using curl and the certificate (change the correct NodePort value to the URL):
 
