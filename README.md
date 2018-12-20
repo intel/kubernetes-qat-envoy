@@ -98,3 +98,6 @@ Then delete the job:
 
     $ kubectl delete job benchmark
 
+## Experimenting with SDS
+
+  See the example [here](examples/sds.md).
