@@ -300,21 +300,26 @@ func main() {
 Put the code into a file inside your Go workspace, e.g. `$HOME/go/src/sds/sds.go`.
 
 Then change to the directory `$HOME/go/src/sds` and type
-
-  $ dep init
-  $ go build
+```
+$ dep init
+$ go build
+```
 
 If everything is OK then a new executable `$HOME/go/src/sds/sds` gets created.
 
 Then go to the hardcoded folder where the experimental SDS server looks for keys
 and generate the first key pair.
 
-  $ mkdir /tmp/keys
-  $ openssl req -x509 -new -batch -nodes -keyout key.pem -out cert.pem
+```
+$ mkdir /tmp/keys
+$ openssl req -x509 -new -batch -nodes -keyout key.pem -out cert.pem
+```
 
 Run the SDS server
 
-  $ $HOME/go/src/sds/sds &
+```
+$ $HOME/go/src/sds/sds &
+```
 
 Finally you can launch Envoy. For that place the following Envoy config needs to be
 placed to a file, e.g. $HOME/go/src/sds/envoy.yaml (Do not forget to update it with
@@ -395,4 +400,6 @@ static_resources:
 
 Launch Envoy:
 
-  $ path/to/envoy  --v2-config-only -l info -c $HOME/go/src/sds/envoy.yaml
+```
+$ path/to/envoy  --v2-config-only -l info -c $HOME/go/src/sds/envoy.yaml
+```
