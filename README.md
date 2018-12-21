@@ -41,7 +41,7 @@ Again, you’ll need to make sure that the Docker image is available on all node
 
     $ kubectl apply -f ./intel-device-plugins-for-kubernetes/deployments/qat2_plugin/qat2_plugin.yaml
 
-Make sure the QAT kernel driver is configured properly on the node. For this copy the content of `configs/c6xx_devX.conf` to the node as `/etc/c6xx_dev0.conf`, `/etc/c6xx_dev1.conf` and `/etc/c6xx_dev2.conf`. After that restart the QAT driver on the node:
+Make sure the QAT kernel driver is configured properly on the node. The exact steps depend on your hardware. The instructions in this document have been tested with C62x chipset QAT accelerator. For this hardware, copy the content of `configs/c6xx_devX.conf` to the node as `/etc/c6xx_dev0.conf`, `/etc/c6xx_dev1.conf` and `/etc/c6xx_dev2.conf`. After that restart the QAT driver on the node:
 
     # adf_ctl restart
 
