@@ -6,294 +6,318 @@ SDS and Envoy. By no means it can be used in production since it can serve
 only one Envoy instance and it's here for illustrative purposes only.
 
 ```go
+// Copyright 2018 Intel Corporation. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
-        "context"
-        "flag"
-        "fmt"
-        "io"
-        "io/ioutil"
-        "net"
-        "os"
-        "time"
+	"context"
+	"flag"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net"
+	"os"
+	"time"
 
-        xdsapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-        authapi "github.com/envoyproxy/go-control-plane/envoy/api/v2/auth"
-        "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
-        sdsapi "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
-        "github.com/fsnotify/fsnotify"
-        "github.com/gogo/protobuf/types"
-        "github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
-        "github.com/pkg/errors"
-        "google.golang.org/grpc"
-        "google.golang.org/grpc/codes"
-        "google.golang.org/grpc/credentials"
-        "google.golang.org/grpc/status"
+	xdsapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
+	authapi "github.com/envoyproxy/go-control-plane/envoy/api/v2/auth"
+	"github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	sdsapi "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
+	"github.com/fsnotify/fsnotify"
+	"github.com/gogo/protobuf/types"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
-        maxStreams = 100000
+	// XXX: Since this sample code was written solely for illustrative purposes
+	//      only one client is allowed to connect to this server.
+	//      Also in order to harden security even more only one gRPC call
+	//      is allowed to be made through this connection.
+	maxConnections = 1
+
+	maxStreams = 100000
 )
 
 // Options provides all of the configuration parameters for secret discovery service.
 type Options struct {
-        // UDSPath is the unix domain socket through which SDS server communicates with proxies.
-        UDSPath string
-
-        // CertFile is the path of Cert File for gRPC server TLS settings.
-        CertFile string
-
-        // KeyFile is the path of Key File for gRPC server TLS settings.
-        KeyFile string
+	// UDSPath is the unix domain socket through which SDS server communicates with proxies.
+	UDSPath string
 }
 
 type secretItem struct {
-        certificateChain []byte
-        privateKey       []byte
+	certificateChain []byte
+	privateKey       []byte
 }
 
 type sds struct {
-        // TODO: we should track more than one nonce. One nonce limits us to have only one Envoy process per SDS server.
-        lastNonce string
+	// TODO: we should track more than one nonce. One nonce limits us to have only one Envoy process per SDS server.
+	lastNonce string
+
+	connectionNum int
 }
 
 func (s *sds) sdsDiscoveryResponse(si *secretItem, proxyID string) (*xdsapi.DiscoveryResponse, error) {
-        s.lastNonce = time.Now().String()
-        resp := &xdsapi.DiscoveryResponse{
-                TypeUrl:     "type.googleapis.com/envoy.api.v2.auth.Secret",
-                VersionInfo: s.lastNonce,
-                Nonce:       s.lastNonce,
-        }
+	s.lastNonce = time.Now().String()
+	resp := &xdsapi.DiscoveryResponse{
+		TypeUrl:     "type.googleapis.com/envoy.api.v2.auth.Secret",
+		VersionInfo: s.lastNonce,
+		Nonce:       s.lastNonce,
+	}
 
-        if si == nil {
-                fmt.Printf("SDS: got nil secret for proxy %q", proxyID)
-                return resp, nil
-        }
+	if si == nil {
+		fmt.Printf("SDS: got nil secret for proxy %q", proxyID)
+		return resp, nil
+	}
 
-        secret := &authapi.Secret{
-                // TODO: get rid of hardcoded names
-                Name: "server_cert",
-        }
-        secret.Type = &authapi.Secret_TlsCertificate{
-                TlsCertificate: &authapi.TlsCertificate{
-                        CertificateChain: &core.DataSource{
-                                Specifier: &core.DataSource_InlineBytes{
-                                        InlineBytes: si.certificateChain,
-                                },
-                        },
-                        PrivateKey: &core.DataSource{
-                                Specifier: &core.DataSource_InlineBytes{
-                                        InlineBytes: si.privateKey,
-                                },
-                        },
-                },
-        }
+	secret := &authapi.Secret{
+		// TODO: get rid of hardcoded names
+		Name: "server_cert",
+	}
+	secret.Type = &authapi.Secret_TlsCertificate{
+		TlsCertificate: &authapi.TlsCertificate{
+			CertificateChain: &core.DataSource{
+				Specifier: &core.DataSource_InlineBytes{
+					InlineBytes: si.certificateChain,
+				},
+			},
+			PrivateKey: &core.DataSource{
+				Specifier: &core.DataSource_InlineBytes{
+					InlineBytes: si.privateKey,
+				},
+			},
+		},
+	}
 
-        ms, err := types.MarshalAny(secret)
-        if err != nil {
-                fmt.Printf("Failed to mashal secret for proxy %q: %v", proxyID, err)
-                return nil, err
-        }
-        resp.Resources = append(resp.Resources, *ms)
+	ms, err := types.MarshalAny(secret)
+	if err != nil {
+		fmt.Printf("Failed to mashal secret for proxy %q: %v", proxyID, err)
+		return nil, err
+	}
+	resp.Resources = append(resp.Resources, *ms)
 
-        return resp, nil
+	return resp, nil
 }
 
 func getSecretItem() (*secretItem, error) {
-        cert, err := ioutil.ReadFile("/tmp/keys/cert.pem")
-        if err != nil {
-                fmt.Println("Failed to read cert chain", err)
-                return nil, err
-        }
-        key, err := ioutil.ReadFile("/tmp/keys/key.pem")
-        if err != nil {
-                fmt.Println("Failed to read private key", err)
-                return nil, err
-        }
+	cert, err := ioutil.ReadFile("/tmp/keys/cert.pem")
+	if err != nil {
+		fmt.Println("Failed to read cert chain", err)
+		return nil, err
+	}
+	key, err := ioutil.ReadFile("/tmp/keys/key.pem")
+	if err != nil {
+		fmt.Println("Failed to read private key", err)
+		return nil, err
+	}
 
-        secret := &secretItem{
-                certificateChain: cert,
-                privateKey:       key,
-        }
+	secret := &secretItem{
+		certificateChain: cert,
+		privateKey:       key,
+	}
 
-        return secret, nil
+	return secret, nil
+}
+
+func (s *sds) isConnectionAllowed() error {
+	if s.connectionNum >= maxConnections {
+		return errors.New("this sample code is allowed to serve only one client, only once and no matter which gRPC call")
+	}
+
+	s.connectionNum++
+
+	return nil
 }
 
 func (s *sds) FetchSecrets(ctx context.Context, discReq *xdsapi.DiscoveryRequest) (*xdsapi.DiscoveryResponse, error) {
-        debug.Print("*")
-        secret, err := getSecretItem()
-        if err != nil {
-                return nil, err
-        }
+	debug.Print("*")
+	if err := s.isConnectionAllowed(); err != nil {
+		return nil, err
+	}
 
-        return s.sdsDiscoveryResponse(secret, discReq.Node.Id)
+	secret, err := getSecretItem()
+	if err != nil {
+		return nil, err
+	}
+
+	return s.sdsDiscoveryResponse(secret, discReq.Node.Id)
 }
 
 func (s *sds) StreamSecrets(stream sdsapi.SecretDiscoveryService_StreamSecretsServer) error {
-        var recvErr error
-        var nodeID string
+	var recvErr error
+	var nodeID string
 
-        debug.Print("*")
-        reqChannel := make(chan *xdsapi.DiscoveryRequest, 1)
+	debug.Print("*")
+	if err := s.isConnectionAllowed(); err != nil {
+		return err
+	}
 
-        go func() {
-                defer close(reqChannel)
-                for {
-                        var req *xdsapi.DiscoveryRequest
+	reqChannel := make(chan *xdsapi.DiscoveryRequest, 1)
 
-                        req, recvErr = stream.Recv()
-                        if recvErr != nil {
-                                if status.Code(recvErr) == codes.Canceled || recvErr == io.EOF {
-                                        fmt.Printf("SDS: connection terminated %+v\n", recvErr)
-                                        return
-                                }
-                                fmt.Printf("SDS: connection terminated with errors %+v\n", recvErr)
-                                return
-                        }
-                        reqChannel <- req
-                }
-        }()
+	go func() {
+		defer close(reqChannel)
+		for {
+			var req *xdsapi.DiscoveryRequest
 
-        watcher, err := fsnotify.NewWatcher()
-        if err != nil {
-                fmt.Println("Failed to create watcher:", err)
-                return err
-        }
-        defer watcher.Close()
+			req, recvErr = stream.Recv()
+			if recvErr != nil {
+				if status.Code(recvErr) == codes.Canceled || recvErr == io.EOF {
+					fmt.Printf("SDS: connection terminated %+v\n", recvErr)
+					return
+				}
+				fmt.Printf("SDS: connection terminated with errors %+v\n", recvErr)
+				return
+			}
+			reqChannel <- req
+		}
+	}()
 
-        err = watcher.Add("/tmp/keys/cert.pem")
-        if err != nil {
-                fmt.Println("Failed to add /tmp/keys/cert.pem to watcher:", err)
-                return err
-        }
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		fmt.Println("Failed to create watcher:", err)
+		return err
+	}
+	defer watcher.Close()
 
-        for {
-                select {
-                case discReq, ok := <-reqChannel:
-                        debug.Print(discReq)
-                        if !ok {
-                                return recvErr
-                        }
-                        if discReq.ErrorDetail != nil {
-                                debug.Print(discReq.ErrorDetail)
-                                return errors.New("Envoy error")
-                        }
-                        debug.Print(discReq.ResponseNonce)
-                        debug.Print(s.lastNonce)
-                        if len(s.lastNonce) > 0 && discReq.ResponseNonce == s.lastNonce {
-                                continue
-                        }
-                        if discReq.Node == nil {
-                                fmt.Println("Invalid discovery request with no node")
-                                return errors.New("Invalid discovery request with no node")
-                        }
+	err = watcher.Add("/tmp/keys/cert.pem")
+	if err != nil {
+		fmt.Println("Failed to add /tmp/keys/cert.pem to watcher:", err)
+		return err
+	}
 
-                        nodeID = discReq.Node.Id
+	for {
+		select {
+		case discReq, ok := <-reqChannel:
+			debug.Print(discReq)
+			if !ok {
+				return recvErr
+			}
+			if discReq.ErrorDetail != nil {
+				debug.Print(discReq.ErrorDetail)
+				return errors.New("Envoy error")
+			}
+			debug.Print(discReq.ResponseNonce)
+			debug.Print(s.lastNonce)
+			if len(s.lastNonce) > 0 && discReq.ResponseNonce == s.lastNonce {
+				continue
+			}
+			if discReq.Node == nil {
+				fmt.Println("Invalid discovery request with no node")
+				return errors.New("Invalid discovery request with no node")
+			}
 
-                        secret, err := getSecretItem()
-                        if err != nil {
-                                return err
-                        }
-                        response, err := s.sdsDiscoveryResponse(secret, nodeID)
-                        if err != nil {
-                                fmt.Println(err)
-                                return err
-                        }
-                        debug.Print(response)
-                        if err := stream.Send(response); err != nil {
-                                fmt.Println("Failed to send:", err)
-                                return err
-                        }
-                        debug.Printf("* nodeID: %s", nodeID)
-                case ev := <-watcher.Events:
-                        if ev.Op == fsnotify.Remove || ev.Op == fsnotify.Rename {
-                                fmt.Println("Key file was deleted")
-                                return errors.New("Key file was deleted")
-                        }
-                        secret, err := getSecretItem()
-                        if err != nil {
-                                return err
-                        }
-                        response, err := s.sdsDiscoveryResponse(secret, nodeID)
-                        if err != nil {
-                                fmt.Println(err)
-                                return err
-                        }
-                        if err := stream.Send(response); err != nil {
-                                fmt.Println("Failed to send:", err)
-                                return err
-                        }
-                        debug.Print("*")
-                case err := <-watcher.Errors:
-                        fmt.Println("Watcher got error:", err)
-                        debug.Print("*")
-                        return err
-                }
-        }
+			nodeID = discReq.Node.Id
+
+			secret, err := getSecretItem()
+			if err != nil {
+				return err
+			}
+			response, err := s.sdsDiscoveryResponse(secret, nodeID)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+			debug.Print(response)
+			if err := stream.Send(response); err != nil {
+				fmt.Println("Failed to send:", err)
+				return err
+			}
+			debug.Printf("* nodeID: %s", nodeID)
+		case ev := <-watcher.Events:
+			if ev.Op == fsnotify.Remove || ev.Op == fsnotify.Rename {
+				fmt.Println("Key file was deleted")
+				return errors.New("Key file was deleted")
+			}
+			secret, err := getSecretItem()
+			if err != nil {
+				return err
+			}
+			response, err := s.sdsDiscoveryResponse(secret, nodeID)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+			if err := stream.Send(response); err != nil {
+				fmt.Println("Failed to send:", err)
+				return err
+			}
+			debug.Print("*")
+		case err := <-watcher.Errors:
+			fmt.Println("Watcher got error:", err)
+			debug.Print("*")
+			return err
+		}
+	}
 }
 
 type server struct {
-        grpcServer *grpc.Server
-        sds        *sds
+	grpcServer *grpc.Server
+	sds        *sds
 }
 
-func grpcServerOptions(options *Options) []grpc.ServerOption {
-        grpcOptions := []grpc.ServerOption{
-                grpc.MaxConcurrentStreams(uint32(maxStreams)),
-        }
+func grpcServerOptions() []grpc.ServerOption {
+	grpcOptions := []grpc.ServerOption{
+		grpc.MaxConcurrentStreams(uint32(maxStreams)),
+	}
 
-        if options.CertFile != "" && options.KeyFile != "" {
-                creds, err := credentials.NewServerTLSFromFile(options.CertFile, options.KeyFile)
-                if err != nil {
-                        errors.Wrap(err, "Failed to load TLS keys")
-                        return nil
-                }
-                grpcOptions = append(grpcOptions, grpc.Creds(creds))
-        }
-
-        return grpcOptions
+	return grpcOptions
 }
 
 func (s *server) setupAndServe(options *Options) error {
-        // Remove unix socket before use.
-        if err := os.Remove(options.UDSPath); err != nil && !os.IsNotExist(err) {
-                return errors.Wrapf(err, "Failed to remove unix://%s", options.UDSPath)
-        }
+	// Remove unix socket before use.
+	if err := os.Remove(options.UDSPath); err != nil && !os.IsNotExist(err) {
+		return errors.Wrapf(err, "Failed to remove unix://%s", options.UDSPath)
+	}
 
-        lis, err := net.Listen("unix", options.UDSPath)
-        if err != nil {
-                return errors.Wrap(err, "Failed to listen to plugin socket")
-        }
+	lis, err := net.Listen("unix", options.UDSPath)
+	if err != nil {
+		return errors.Wrap(err, "Failed to listen to plugin socket")
+	}
 
-        s.grpcServer = grpc.NewServer(grpcServerOptions(options)...)
-        sdsapi.RegisterSecretDiscoveryServiceServer(s.grpcServer, s.sds)
-        //go func() {
-        fmt.Println("Start SDS at:", options.UDSPath)
-        return s.grpcServer.Serve(lis)
-        //}()
+	s.grpcServer = grpc.NewServer(grpcServerOptions()...)
+	sdsapi.RegisterSecretDiscoveryServiceServer(s.grpcServer, s.sds)
+	fmt.Println("Start SDS at:", options.UDSPath)
+	return s.grpcServer.Serve(lis)
 }
 
 func main() {
-        debugEnabled := flag.Bool("debug", false, "enable debug output")
-        socketEndpoint := flag.String("socket", "/tmp/sds.sock", "unix socket SDS listens to")
-        flag.Parse()
+	debugEnabled := flag.Bool("debug", false, "enable debug output")
+	socketEndpoint := flag.String("socket", "/tmp/sds.sock", "unix socket SDS listens to")
+	flag.Parse()
 
-        if *debugEnabled {
-                debug.Activate()
-        }
+	if *debugEnabled {
+		debug.Activate()
+	}
 
-        options := &Options{
-                UDSPath: *socketEndpoint,
-        }
-        server := &server{
-                sds: &sds{},
-        }
-        err := server.setupAndServe(options)
-        if err != nil {
-                fmt.Printf("ERROR: %+v\n", err)
-                os.Exit(1)
-        }
+	options := &Options{
+		UDSPath: *socketEndpoint,
+	}
+	server := &server{
+		sds: &sds{
+			connectionNum: 0,
+		},
+	}
+	err := server.setupAndServe(options)
+	if err != nil {
+		fmt.Printf("ERROR: %+v\n", err)
+		os.Exit(1)
+	}
 }
 ```
 
@@ -312,7 +336,7 @@ and generate the first key pair.
 
 ```
 $ mkdir /tmp/keys
-$ openssl req -x509 -new -batch -nodes -keyout key.pem -out cert.pem
+$ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem
 ```
 
 Run the SDS server
