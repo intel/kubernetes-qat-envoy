@@ -345,7 +345,7 @@ Run the SDS server
 $ $HOME/go/src/sds/sds &
 ```
 
-Finally you can launch Envoy. For that place the following Envoy config needs to be
+Finally you can launch Envoy. For that the following Envoy config needs to be
 placed to a file, e.g. $HOME/go/src/sds/envoy.yaml (Do not forget to update it with
 your domain names you used as CN when created the SSL keys).
 
