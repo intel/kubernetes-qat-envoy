@@ -38,7 +38,6 @@ import (
 	sdsapi "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gogo/protobuf/types"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -146,7 +145,6 @@ func (s *sds) isConnectionAllowed() error {
 }
 
 func (s *sds) FetchSecrets(ctx context.Context, discReq *xdsapi.DiscoveryRequest) (*xdsapi.DiscoveryResponse, error) {
-	debug.Print("*")
 	if err := s.isConnectionAllowed(); err != nil {
 		return nil, err
 	}
@@ -163,7 +161,6 @@ func (s *sds) StreamSecrets(stream sdsapi.SecretDiscoveryService_StreamSecretsSe
 	var recvErr error
 	var nodeID string
 
-	debug.Print("*")
 	if err := s.isConnectionAllowed(); err != nil {
 		return err
 	}
@@ -204,16 +201,12 @@ func (s *sds) StreamSecrets(stream sdsapi.SecretDiscoveryService_StreamSecretsSe
 	for {
 		select {
 		case discReq, ok := <-reqChannel:
-			debug.Print(discReq)
 			if !ok {
 				return recvErr
 			}
 			if discReq.ErrorDetail != nil {
-				debug.Print(discReq.ErrorDetail)
 				return errors.New("Envoy error")
 			}
-			debug.Print(discReq.ResponseNonce)
-			debug.Print(s.lastNonce)
 			if len(s.lastNonce) > 0 && discReq.ResponseNonce == s.lastNonce {
 				continue
 			}
@@ -233,12 +226,10 @@ func (s *sds) StreamSecrets(stream sdsapi.SecretDiscoveryService_StreamSecretsSe
 				fmt.Println(err)
 				return err
 			}
-			debug.Print(response)
 			if err := stream.Send(response); err != nil {
 				fmt.Println("Failed to send:", err)
 				return err
 			}
-			debug.Printf("* nodeID: %s", nodeID)
 		case ev := <-watcher.Events:
 			if ev.Op == fsnotify.Remove || ev.Op == fsnotify.Rename {
 				fmt.Println("Key file was deleted")
@@ -257,10 +248,8 @@ func (s *sds) StreamSecrets(stream sdsapi.SecretDiscoveryService_StreamSecretsSe
 				fmt.Println("Failed to send:", err)
 				return err
 			}
-			debug.Print("*")
 		case err := <-watcher.Errors:
 			fmt.Println("Watcher got error:", err)
-			debug.Print("*")
 			return err
 		}
 	}
@@ -297,13 +286,8 @@ func (s *server) setupAndServe(options *Options) error {
 }
 
 func main() {
-	debugEnabled := flag.Bool("debug", false, "enable debug output")
 	socketEndpoint := flag.String("socket", "/tmp/sds.sock", "unix socket SDS listens to")
 	flag.Parse()
-
-	if *debugEnabled {
-		debug.Activate()
-	}
 
 	options := &Options{
 		UDSPath: *socketEndpoint,
