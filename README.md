@@ -100,7 +100,7 @@ Then delete the job:
 
 ## Experimenting with SDS
 
-  See the example [here](examples/sds.md).
+See the example [here](examples/sds.md).
 
 ## License
 
