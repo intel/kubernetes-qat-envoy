@@ -6,16 +6,12 @@ ADD QAT_Engine QAT_Engine
 ADD envoy envoy
 
 RUN mkdir -p /usr/share/man/man1 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=863199
-RUN apt-get update
+RUN apt-get -o Acquire::Check-Valid-Until=false update
 
 RUN apt-get -y install git libtool \
     cmake clang-format-7 automake ninja-build curl \
     git build-essential wget libudev-dev libssl-dev openssl pkg-config autoconf autogen libtool \
-    openssl libssl-dev pkg-config zip g++ zlib1g-dev unzip python curl gnupg2
-
-# RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
-# RUN curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
-# RUN apt-get update && apt-get -y install bazel
+    libssl-dev pkg-config zip g++ zlib1g-dev unzip python curl gnupg2
 
 RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/0.19.2/bazel-0.19.2-installer-linux-x86_64.sh
 RUN chmod +x bazel-0.19.2-installer-linux-x86_64.sh
@@ -62,7 +58,7 @@ RUN cd /envoy && /root/.bazel/bin/bazel build //source/exe:envoy-static
 # Start creating the target image
 FROM debian:sid-slim
 
-RUN apt-get update && apt-get install -y openssl
+RUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y openssl
 
 # Needed for Kata Containers
 COPY --from=builder /QAT_Engine/qat/config/c6xx/multi_thread_event-driven_optimized/c6xx_dev0.conf /etc/c6xxvf_dev0.conf
