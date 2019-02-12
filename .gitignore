@@ -1,0 +1,9 @@
+vagrant/.vagrant
+vagrant/inventory/artifacts/
+vagrant/inventory/group_vars/all.yml
+vagrant/roles
+qat*.tar.gz
+*.retry
+*.log
+*.swp
+.tox/

@@ -1,0 +1,111 @@
+---
+# SPDX-license-identifier: Apache-2.0
+##############################################################################
+# Copyright (c) 2019 Intel Corporation
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Apache License, Version 2.0
+# which accompanies this distribution, and is available at
+# http://www.apache.org/licenses/LICENSE-2.0
+##############################################################################
+
+- hosts: qat-node
+  become: yes
+  tasks:
+    - name: Load krd variables
+      include_vars:
+        file: krd-vars.yml
+    - name: retrieve QAT driver
+      become: no
+      get_url:
+        url: "{{ qat_driver_url }}"
+        dest: "{{ qat_envoy_dest }}/qat{{ qat_driver_version }}.tar.gz"
+    - name: configure docker client
+      block:
+      - name: create docker config folder
+        file:
+          state: directory
+          path: /root/.docker/
+      - name: configure docker client to use proxy values
+        copy:
+          dest: "/root/.docker/config.json"
+          content: |
+            {
+              "proxies":
+              {
+                "default":
+                {
+                  "httpProxy": "{{ lookup('env','http_proxy') }}",
+                  "httpsProxy": "{{ lookup('env','https_proxy') }}",
+                  "noProxy": "{{ lookup('env','no_proxy') }}"
+                }
+              }
+            }
+      when: lookup('env','http_proxy') != "fooproxy" or lookup('env','https_proxy') != "fooproxy" or lookup('env','no_proxy') != "fooproxy"
+    - name: wait for kubernetes recovering
+      shell: "/usr/local/bin/kubectl get pods -o json -n kube-system"
+      register: kubectl_get_pods
+      until: kubectl_get_pods.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]
+      ignore_errors: True
+    - name: get qat plugin pod name
+      shell: "/usr/local/bin/kubectl get pods | grep intel-qat2-plugin | awk '{print $1}'"
+      register: intel_qat_plugin_pod
+    - name: delete qat plugin daemonset
+      command: "/usr/local/bin/kubectl delete daemonsets intel-qat2-plugin --now --force"
+      ignore_errors: True
+    - name: wait for destroying qat plugin
+      shell: "/usr/local/bin/kubectl get pods {{ intel_qat_plugin_pod.stdout }}"
+      register: kubectl_get_intel_qat_plugin_pod
+      until: '"not found" in kubectl_get_intel_qat_plugin_pod.stdout'
+      ignore_errors: True
+    - name: remove old qat docker images
+      shell: "docker images {{ item }} -q | xargs docker rmi -f"
+      ignore_errors: True
+      loop:
+        - envoy-qat
+        - intel-qat2-plugin
+    - name: build QAT-accelerated envoy image
+# NOTE: docker_image module doesn't take proxy values defined in ~/.docker/config.json
+#      docker_image:
+#        dockerfile: Dockerfile.envoy
+#        path: "{{ qat_envoy_dest }}"
+#        name: envoy-qat
+#        tag: devel
+      command: docker image build -t envoy-qat:devel -f Dockerfile.envoy .
+      args:
+        chdir: "{{ qat_envoy_dest }}"
+    - name: create ssl certificate and private key
+      command: openssl req -x509 -new -batch -nodes -subj '/CN=localhost' -keyout /tmp/key.pem -out /tmp/cert.pem
+    - name: regitster the ssl certificate and private key into kubernetes
+      command: "/usr/local/bin/kubectl create secret tls envoy-tls-secret --cert /tmp/cert.pem --key /tmp/key.pem"
+      ignore_errors: True
+    - name: create qat device plugin docker image
+      command: /bin/make intel-qat2-plugin
+      args:
+        chdir: "{{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes"
+#      make:
+#        chdir: "{{ qat_driver_dest }}/intel-device-plugins-for-kubernetes"
+#        target: intel-qat2-plugin
+    - name: create qat device plugin docker daemonset
+      command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat2_plugin/qat2_plugin.yaml"
+      ignore_errors: True
+    - name: get qat devices
+      shell: /usr/local/bin/adf_ctl status | grep up | awk '{print substr($4,0,4) substr($1,4,8)}'
+      register: qat_devices
+    - name: ensure SHIM config section
+      blockinfile:
+        dest: "/etc/{{ item }}.conf"
+        block: |
+          [SHIM]
+          NumberCyInstances = 1
+          NumberDcInstances = 0
+          NumProcesses = 2
+          LimitDevAccess = 0
+
+          # Crypto - User instance #0
+          Cy0Name = "UserCY0"
+          Cy0IsPolled = 1
+          # List of core affinities
+          Cy0CoreAffinity = 0
+      loop: "{{ qat_devices.stdout_lines }}"
+    - name: restart qat services
+      command: /usr/local/bin/adf_ctl restart
