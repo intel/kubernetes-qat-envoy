@@ -1,8 +1,8 @@
-# Kubernetes and QAT-accelerated Envoy
+# Kubernetes* and Intel Quick Assist Technology accelerated Envoy*
 
 ## Introduction
 
-This is a technical guide for getting QAT-accelerated Envoy running on a bare-metal Kubernetes cluster. You may need to adapt some commands to your particular cluster setup. You need to first install the QAT driver on every node which has QAT hardware installed. The driver used in this setup is located at https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.3.0-00033.tar.gz, and the package contains a README file which explains the installation.
+This is a technical guide for getting Intel Quick Assist Technology (QAT) accelerated Envoy* running on a bare-metal Kubernetes* cluster. You may need to adapt some commands to your particular cluster setup. You need to first install the QAT driver on every node which has QAT hardware installed. The driver used in this setup is located at https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.3.0-00033.tar.gz, and the package contains a README file which explains the installation.
 
 ## Clone this repository (with submodules) and fetch the QAT driver
 
@@ -27,7 +27,7 @@ Create SSL certificate and private key (note that your process for creating and 
 
     $ openssl req -x509 -new -batch -nodes -subj '/CN=localhost' -keyout key.pem -out cert.pem
 
-Create a kubernetes secret out of the certificate and the key:
+Create a Kubernetes* secret out of the certificate and the key:
 
     $ kubectl create secret tls envoy-tls-secret --cert cert.pem --key key.pem
 
@@ -45,9 +45,9 @@ Make sure the QAT kernel driver is configured properly on the node. The exact st
 
     # adf_ctl restart
 
-## Apply the Nginx and Envoy deployment
+## Apply the Nginx* and Envoy* deployment
 
-Create the Nginx with Envoy sidecar deployment:
+Create the Nginx* with Envoy* sidecar deployment:
 
     $ kubectl apply -f ./deployments/nginx-behind-envoy-deployment.yaml
 
@@ -64,11 +64,9 @@ Access the proxy using curl and the certificate (change the correct NodePort val
 
     $ curl --cacert cert.pem https://localhost:32675
 
-You should expect to see the nginx-provided web page source.
+You should expect to see the Nginx*-provided web page source.
 
-In order to run benchmarks with k6 load testing tool, first create a
-container for a version which has
-`TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256` support enabled:
+In order to run benchmarks with k6 load testing tool, first create a container for a version which has `TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256` support enabled:
 
     $ cd k6
     # docker image build -t loadimpact/k6:custom -f Dockerfile .
@@ -82,7 +80,7 @@ To run benchmarks against non-accelerated setup apply this deployment config and
 
     $ kubectl apply -f deployments/nginx-behind-envoy-deployment-no-qat.yaml
 
-If you would like to run the benchmark within Kubernetes, edit `tests/k6-testing-config.js` file to set the test parameters. Do not change the URL. Then create a ConfigMap from the file:
+If you would like to run the benchmark within Kubernetes*, edit `tests/k6-testing-config.js` file to set the test parameters. Do not change the URL. Then create a ConfigMap from the file:
 
     $ kubectl create configmap k6-config --from-file=tests/k6-testing-config.js
 
@@ -104,6 +102,4 @@ See the example [here](examples/sds.md).
 
 ## License
 
-All files in this repository are licensed with BSD license (see
-`COPYING`), unless they are explicitly licensed with some other license.
-This does not apply to the git submodules.
+All files in this repository are licensed with BSD license (see `COPYING`), unless they are explicitly licensed with some other license.  This does not apply to the git submodules.
