@@ -53,7 +53,7 @@ RUN cd /QAT_Engine && ./autogen.sh && \
 RUN install -d /usr/local/lib64 && cd /usr/local/lib64 && ln -s /usr/lib/x86_64-linux-gnu/libssl.so && ln -s /usr/lib/x86_64-linux-gnu/libcrypto.so
 
 # build Envoy
-RUN cd /envoy && /root/.bazel/bin/bazel build //source/exe:envoy-static
+RUN cd /envoy && /root/.bazel/bin/bazel build -c opt //source/exe:envoy-static
 
 # Start creating the target image
 FROM debian:sid-slim
