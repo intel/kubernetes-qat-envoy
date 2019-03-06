@@ -1,0 +1,16 @@
+openssl_conf = openssl_init
+system_default = system_default_sect
+
+[ system_default_sect ]
+MinProtocol = TLSv1.2
+CipherString = DEFAULT@SECLEVEL=2
+
+[ openssl_init ]
+engines = engine_section
+
+[ engine_section ]
+qat = qat_section
+
+[ qat_section ]
+engine_id = qat
+default_algorithms = ALL
