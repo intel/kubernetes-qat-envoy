@@ -26,9 +26,9 @@ if [[ "$qat_svc" != *"0"* ]]; then
             echo "The $dev_type device type is not supported by QAT envoy plugin"
             exit 1
         fi
-        dev_name=$(echo "$device" | awk '{print substr($4,0,4) substr($1,4,8)}')
+        dev_number=$(echo "$device" | awk '{print $1}' | tr -d 'qat')
         for ssl_key in NumProcesses NumberCyInstances NumberDcInstances; do
-            sudo crudini --get --existing "/etc/$dev_name.conf" SSL $ssl_key > /dev/null
+            sudo crudini --get --existing "/etc/$dev_type$dev_number.conf" SSL $ssl_key > /dev/null
         done
     done <<< "$devices"
 else

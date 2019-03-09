@@ -89,7 +89,7 @@
       command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat2_plugin/qat2_plugin.yaml"
       ignore_errors: True
     - name: get qat devices
-      shell: /usr/local/bin/adf_ctl status | grep up | awk '{print substr($4,0,4) substr($1,4,8)}'
+      shell: /usr/local/bin/adf_ctl status | grep up | awk '{print $4 substr($1, 4)}' | tr -d ','
       register: qat_devices
     - name: ensure SHIM config section
       blockinfile:
