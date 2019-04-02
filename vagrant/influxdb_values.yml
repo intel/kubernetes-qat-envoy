@@ -1,0 +1,27 @@
+# SPDX-license-identifier: Apache-2.0
+##############################################################################
+# Copyright (c) 2019 Intel Corporation
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Apache License, Version 2.0
+# which accompanies this distribution, and is available at
+# http://www.apache.org/licenses/LICENSE-2.0
+##############################################################################
+
+setDefaultUser:
+  enabled: true
+  user:
+    username: "admin"
+    pasword: "secret"
+    privileges: "WITH ALL PRIVILEGES"
+
+env:
+  - name: INFLUXDB_DB
+    value: "k6"
+  - name: INFLUXDB_WRITE_USER
+    value: "k6"
+  - name: INFLUXDB_WRITE_USER_PASSWORD
+    value: "secret"
+  - name: INFLUXDB_READ_USER
+    value: "grafana"
+  - name: INFLUXDB_READ_USER_PASSWORD
+    value: "secret"

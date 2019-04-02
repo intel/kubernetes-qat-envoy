@@ -25,6 +25,7 @@ chmod og-wx ~/.ssh/authorized_keys
 
 # Install dependencies
 sudo swapoff -a
+sudo sed -i '/ swap / s/^/#/' /etc/fstab
 curl -sL https://bootstrap.pypa.io/get-pip.py | sudo python
 sudo -E pip install ansible
 sudo mkdir -p /etc/ansible/
