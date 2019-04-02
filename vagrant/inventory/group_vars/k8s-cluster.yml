@@ -49,3 +49,7 @@ kube_version: v1.12.5
 # works in the kernel space
 # https://kubernetes.io/docs/concepts/services-networking/service/#proxy-mode-ipvs
 kube_proxy_mode: iptables
+
+# Helm deployment
+helm_enabled: true
+local_volume_provisioner_enabled: true

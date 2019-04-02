@@ -25,11 +25,14 @@ if ! sudo -n "true"; then
 fi
 
 # Validating local IP addresses in no_proxy environment variable
-if [[ -n "${no_proxy+x}" ]]; then
+if [[ ${NO_PROXY+x} = "x" ]]; then
     for ip in $(hostname --ip-address || hostname -i); do
-        if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$  &&  $no_proxy != *"$ip"* ]]; then
+        if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$  &&  $NO_PROXY != *"$ip"* ]]; then
             echo "The $ip IP address is not defined in no_proxy env"
             exit 1
         fi
     done
 fi
+
+#echo "Making sure the system clock is accurate..."
+#sudo date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"

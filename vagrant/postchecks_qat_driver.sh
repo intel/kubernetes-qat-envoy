@@ -35,3 +35,5 @@ else
     echo "WARNING: There is no QAT devides running in this node"
     sleep 15
 fi
+
+echo -e " \nPost-checks for qat driver complete! "

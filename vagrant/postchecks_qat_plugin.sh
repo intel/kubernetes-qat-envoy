@@ -15,33 +15,36 @@ set -o errexit
 echo "QAT plugin validation"
 
 echo "Ensuring that envoy-qat:devel docker image exists..."
-if [[ -z $(sudo docker images | grep envoy-qat | grep devel) ]]; then
+if ! sudo docker images | grep -E "envoy-qat.*devel"; then
     echo "envoy-qat:devel docker image doesn't exists"
     exit 1
 fi
 
 echo "Verifying intel-qat2-plugin daemonset is available..."
 plugin_daemonset=$( kubectl get daemonset | grep intel-qat2-plugin)
-if [[ $plugin_daemonset ]]; then
-   if [[ $(echo $plugin_daemonset | awk '{print $2}') != $(echo $plugin_daemonset | awk '{print $6}') ]]; then
-      echo "Ther Intel QAT daemonset plugin is not available yet"
-      exit 1
-   fi
+if [[ -n $plugin_daemonset ]]; then
+    if [[ $(echo "$plugin_daemonset" | awk '{print $2}') != $(echo "$plugin_daemonset" | awk '{print $6}') ]]; then
+        echo "Ther Intel QAT daemonset plugin is not available yet"
+        exit 1
+    fi
 else
     echo "The Intel QAT daemonset plugin is not created"
     exit 1
 fi
 
-echo "Ensuring that the intel-qat2-plugin pod has registered the devices..."
-for plugin_pod in $(kubectl get pods | grep intel-qat2 | awk '{print $1}'); do
-     if [[ -z $(kubectl logs $plugin_pod | grep "Start server for") ]]; then
-        echo "The Intel QAT daemonset has not started properly"
-        exit 1
-     fi
-     if [[ -z $(kubectl logs $plugin_pod | grep "Device plugin for") ]]; then
-        echo "The QAT devices weren't registered properly"
-        exit 1
-     fi
-done
+qat_svc=$(sudo service qat_service status | grep "There is .* QAT acceleration device(s) in the system:")
+if [[ "$qat_svc" != *"0"* ]]; then
+    echo "Ensuring that the intel-qat2-plugin pod has registered the devices..."
+    for plugin_pod in $(kubectl get pods | grep intel-qat2 | awk '{print $1}'); do
+        if ! kubectl logs "$plugin_pod" | grep -q "Start server for"; then
+            echo "The Intel QAT daemonset has not started properly"
+            exit 1
+        fi
+        if ! kubectl logs "$plugin_pod" | grep -q "Device plugin for"; then
+            echo "The QAT devices weren't registered properly"
+            exit 1
+        fi
+    done
+fi
 
 echo -e " \nPost-checks for qat plugin complete! "

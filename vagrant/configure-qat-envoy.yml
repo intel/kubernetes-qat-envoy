@@ -73,11 +73,6 @@
       command: docker image build -t envoy-qat:devel -f Dockerfile.envoy .
       args:
         chdir: "{{ qat_envoy_dest }}"
-    - name: create ssl certificate and private key
-      command: openssl req -x509 -new -batch -nodes -subj '/CN=localhost' -keyout /tmp/key.pem -out /tmp/cert.pem
-    - name: regitster the ssl certificate and private key into kubernetes
-      command: "/usr/local/bin/kubectl create secret tls envoy-tls-secret --cert /tmp/cert.pem --key /tmp/key.pem"
-      ignore_errors: True
     - name: create qat device plugin docker image
       command: /bin/make intel-qat2-plugin
       args:

@@ -1,0 +1,63 @@
+# SPDX-license-identifier: Apache-2.0
+##############################################################################
+# Copyright (c) 2019 Intel Corporation
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Apache License, Version 2.0
+# which accompanies this distribution, and is available at
+# http://www.apache.org/licenses/LICENSE-2.0
+##############################################################################
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-config-no-qat
+data:
+  config: |
+    import http from "k6/http";
+    import { check, sleep } from "k6";
+
+    export let options = {
+      vus: 3000,
+      duration: "4m",
+      insecureSkipTLSVerify: true,
+      noConnectionReuse: true,
+      noVUConnectionReuse: true,
+      tlsCipherSuites: [
+        "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+      ]
+    };
+
+    export default function() {
+      let res = http.get("https://hellonginx-no-qat.default.svc.cluster.local:9000");
+      check(res, {
+        "status was 200": (r) => r.status == 200,
+        "transaction time OK": (r) => r.timings.duration < 200
+      });
+      sleep(1);
+    };
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: k6-cron-no-qat
+spec:
+  schedule: "*/6 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: k6-test
+            image: loadimpact/k6:custom
+            command: [ "k6", "run", "--out", "influxdb=http://metrics-db-no-qat-influxdb.default.svc.cluster.local:8086", "/opt/script.js" ]
+            volumeMounts:
+            - name: k6-volume
+              mountPath: /opt/
+          volumes:
+            - name: k6-volume
+              configMap:
+                name: k6-config-no-qat
+                items:
+                  - key: config
+                    path: script.js
+          restartPolicy: OnFailure

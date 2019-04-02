@@ -15,11 +15,12 @@ box = {
 
 if ENV['no_proxy'] != nil or ENV['NO_PROXY']
   $no_proxy = ENV['NO_PROXY'] || ENV['no_proxy'] || "127.0.0.1,localhost"
-  $subnet = "192.168.121"
+  $subnet = "192.168.123"
   # NOTE: This range is based on vagrant-libvirt network definition CIDR 192.168.121.0/27
   (1..31).each do |i|
     $no_proxy += ",#{$subnet}.#{i}"
   end
+  $no_proxy += ",10.0.2.15"
 end
 
 vagrant_root = File.dirname(__FILE__)
@@ -29,7 +30,9 @@ puts "[INFO] Shared folder: #{vagrant_root}"
 Vagrant.configure("2") do |config|
   config.vm.provider :libvirt
   config.vm.provider :virtualbox
-  config.vm.synced_folder '../', "#{vagrant_root}", create: true
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+  config.vm.synced_folder '../', "#{vagrant_root}", create: true,
+    rsync__args: ["--verbose", "--archive", "--delete", "-z"]
   config.vm.provision 'shell', privileged: false do |sh|
     sh.env = {
       'JENKINS_HOME': '/home/vagrant'
@@ -41,22 +44,26 @@ Vagrant.configure("2") do |config|
       ./installer.sh | tee installer.log
     SHELL
   end
+  [:virtualbox, :libvirt].each do |provider|
+     config.vm.provider provider do |p, override|
+       p.cpus = 6
+       p.memory = 8192
+     end
+  end
 
   config.vm.provider :virtualbox do |v, override|
     override.vm.box =  box[:virtualbox][:name]
     override.vm.box_version = box[:virtualbox][:version]
-    v.customize ["modifyvm", :id, "--memory", 8192]
-    v.customize ["modifyvm", :id, "--cpus", 4]
   end
 
   config.vm.provider :libvirt do |v, override|
     override.vm.box =  box[:libvirt][:name]
     override.vm.box_version = box[:libvirt][:version]
-    v.memory = 32768
-    v.cpus = 16
     v.nested = true
     v.cpu_mode = 'host-passthrough'
-    v.management_network_address = "192.168.121.0/27"
+    v.management_network_address = "192.168.123.0/27"
+    v.management_network_name = "qat-mgmt-net"
+    v.random_hostname = true
   end
 
   if ENV['http_proxy'] != nil and ENV['https_proxy'] != nil

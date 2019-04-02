@@ -13,6 +13,15 @@ Kubernetes cluster using the following instruction:
 
     $ vagrant up
 
+## Enable Grafana Dashboard
+
+The [sample_plugin.sh](sample_plugin.sh) bash script installs and
+configures a grafana dashboard which makes easier to compare the
+request per second and request duration results of a single Nginx
+server that is using QAT.
+
+![Grafana Dashboard](img/grafana_dashboard.png)
+
 ## License
 
 Apache-2.0
