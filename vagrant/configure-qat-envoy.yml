@@ -15,10 +15,9 @@
       include_vars:
         file: krd-vars.yml
     - name: retrieve QAT driver
-      become: no
       get_url:
-        url: "{{ qat_driver_url }}"
-        dest: "{{ qat_envoy_dest }}/qat{{ qat_driver_version }}.tar.gz"
+        url: "{{ qat_plugin.url }}"
+        dest: "{{ qat_plugin.dest }}"
     - name: configure docker client
       block:
       - name: create docker config folder

@@ -27,7 +27,7 @@ fi
 for resource in k8s_resources/*.yml; do
     kubectl apply -f "$resource"
 done
-qat_svc=$(sudo service qat_service status | grep "There is .* QAT acceleration device(s) in the system:")
+qat_svc=$(sudo /etc/init.d/qat_service status | grep "There is .* QAT acceleration device(s) in the system:")
 if [[ "$qat_svc" != *"0"* ]]; then
     for resource in k8s_resources/qat/*.yml; do
         kubectl apply -f "$resource"

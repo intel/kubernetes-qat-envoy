@@ -16,10 +16,10 @@ echo "QAT driver validation"
 
 # Driver validation
 supported_dev="c6xx dh895xcc"
-qat_svc=$(sudo service qat_service status | grep "There is .* QAT acceleration device(s) in the system:")
+qat_svc=$(sudo /etc/init.d/qat_service status | grep "There is .* QAT acceleration device(s) in the system:")
 if [[ "$qat_svc" != *"0"* ]]; then
     sudo pip install crudini --quiet
-    devices=$(sudo service qat_service status | grep 'state: up')
+    devices=$(sudo /etc/init.d/qat_service status | grep 'state: up')
     while read -r device; do
         dev_type=$(echo "$device" | awk '{print $4}' | tr -d ',')
         if [[ "$supported_dev" != *"$dev_type"* ]]; then

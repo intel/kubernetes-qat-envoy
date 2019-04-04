@@ -24,7 +24,7 @@ echo "Verifying intel-qat2-plugin daemonset is available..."
 plugin_daemonset=$( kubectl get daemonset | grep intel-qat2-plugin)
 if [[ -n $plugin_daemonset ]]; then
     if [[ $(echo "$plugin_daemonset" | awk '{print $2}') != $(echo "$plugin_daemonset" | awk '{print $6}') ]]; then
-        echo "Ther Intel QAT daemonset plugin is not available yet"
+        echo "The Intel QAT daemonset plugin is not available yet"
         exit 1
     fi
 else
@@ -32,7 +32,7 @@ else
     exit 1
 fi
 
-qat_svc=$(sudo service qat_service status | grep "There is .* QAT acceleration device(s) in the system:")
+qat_svc=$(sudo /etc/init.d/qat_service status | grep "There is .* QAT acceleration device(s) in the system:")
 if [[ "$qat_svc" != *"0"* ]]; then
     echo "Ensuring that the intel-qat2-plugin pod has registered the devices..."
     for plugin_pod in $(kubectl get pods | grep intel-qat2 | awk '{print $1}'); do

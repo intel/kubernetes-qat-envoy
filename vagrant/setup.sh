@@ -200,3 +200,4 @@ if [ "$VAGRANT_DEFAULT_PROVIDER" == libvirt ]; then
         ;;
     esac
 fi
+vagrant plugin install vagrant-reload

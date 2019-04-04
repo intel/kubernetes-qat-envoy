@@ -13,10 +13,7 @@ set -o xtrace
 set -o nounset
 
 # Kubespray configuration values
-kubespray_dest_folder=/opt
-kubespray_version=2.8.3
-kubespray_tarball=v$kubespray_version.tar.gz
-kubespray_folder=$kubespray_dest_folder/kubespray-$kubespray_version
+kubespray_folder=/opt/kubespray
 
 # uninstall_k8s() - Uninstall Kuberentes deployment
 function uninstall_k8s {
@@ -30,13 +27,24 @@ function install_k8s {
     if [[ ! -d $kubespray_folder ]]; then
         echo "Download kubespray binaries"
 
-        sudo yum install -y wget
-        wget https://github.com/kubernetes-sigs/kubespray/archive/$kubespray_tarball
-        sudo tar -C $kubespray_dest_folder -xzf $kubespray_tarball
+        # shellcheck disable=SC1091
+        source /etc/os-release || source /usr/lib/os-release
+        case ${ID,,} in
+            rhel|centos|fedora)
+                sudo yum install -y git
+            ;;
+            clear-linux-os)
+                sudo systemctl unmask docker.service
+            ;;
+        esac
+        #sudo git clone https://github.com/kubernetes-sigs/kubespray $kubespray_folder
+        sudo git clone https://github.com/electrocucaracha/kubespray $kubespray_folder
         sudo chown -R "$USER" $kubespray_folder
-        rm $kubespray_tarball
+        pushd $kubespray_folder
+        #git checkout release-2.9
+        sudo -E pip install -r requirements.txt
+        popd
 
-        sudo -E pip install -r $kubespray_folder/requirements.txt
         echo "Kubespray configuration"
 
         rm -f ./inventory/group_vars/all.yml 2> /dev/null
@@ -49,6 +57,7 @@ function install_k8s {
         fi
     fi
 
+    sudo mkdir -p /etc/bash_completion.d
     ansible-playbook -vvv -i ./inventory/hosts.ini $kubespray_folder/cluster.yml --become | tee setup-kubernetes.log
 
     for vol in vol1 vol2 vol3; do

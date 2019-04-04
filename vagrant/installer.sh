@@ -25,11 +25,22 @@ chmod og-wx ~/.ssh/authorized_keys
 
 # Install dependencies
 sudo swapoff -a
-sudo sed -i '/ swap / s/^/#/' /etc/fstab
-curl -sL https://bootstrap.pypa.io/get-pip.py | sudo python
-sudo -E pip install ansible
+if [ -e /etc/fstab ]; then
+    sudo sed -i '/ swap / s/^/#/' /etc/fstab
+fi
+# shellcheck disable=SC1091
+source /etc/os-release || source /usr/lib/os-release
+case ${ID,,} in
+    rhel|centos|fedora)
+        curl -sL https://bootstrap.pypa.io/get-pip.py | sudo python
+    ;;
+    clear-linux-os)
+        sudo swupd bundle-add python3-basic
+    ;;
+esac
 sudo mkdir -p /etc/ansible/
 sudo cp ./ansible.cfg /etc/ansible/ansible.cfg
+sudo -E pip install ansible==2.7.10
 ansible-galaxy install -r ./galaxy-requirements.yml --ignore-errors
 
 # QAT Driver installation
