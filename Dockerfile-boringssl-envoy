@@ -1,0 +1,36 @@
+FROM debian:sid as builder
+
+RUN apt-get update
+
+RUN apt-get -y install git libtool \
+    cmake clang-format-7 automake ninja-build curl \
+    git build-essential wget libudev-dev libssl-dev openssl pkg-config autoconf autogen libtool \
+    openssl libssl-dev pkg-config zip g++ zlib1g-dev unzip python curl gnupg2 \
+    python3 gperf libcap-dev
+
+RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/0.24.1/bazel-0.24.1-installer-linux-x86_64.sh
+RUN chmod +x bazel-0.24.1-installer-linux-x86_64.sh
+RUN ./bazel-0.24.1-installer-linux-x86_64.sh --user
+
+RUN git clone --recurse-submodules --single-branch --branch qat-provider https://github.com/ipuustin/envoy.git envoy
+
+# build Envoy
+RUN cd envoy && /root/.bazel/bin/bazel build --verbose_failures -c opt -s //source/exe:envoy-static
+
+# Start creating the target image
+FROM debian:sid-slim
+
+RUN apt-get update && apt-get -y install gettext-base
+
+COPY --from=builder /envoy/bazel-bin/source/exe/envoy-static /envoy-static
+# Defaulting env vars
+ENV QAT_SECTION_NAME SHIM
+ENV POLL_DELAY 2000000
+
+# Replacing env var values on envoy config and generating entrypoint script
+RUN echo "#!/bin/sh\n" \
+         "set -e\n" \
+         "/usr/bin/envsubst < /etc/envoy/config/envoy-conf.yaml > /tmp/envoy-conf.yaml\n" \
+         "/envoy-static -c /tmp/envoy-conf.yaml \$@\n" > /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/entrypoint.sh"]

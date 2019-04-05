@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: helloenvoy
+  labels:
+    app: boringssl-envoy
+spec:
+  type: NodePort
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+      name: https
+  selector:
+    app: boringssl-envoy
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: boringssl-envoy-config
+data:
+  # envoy-conf.yaml - Configmap supports ENV variables, such:
+  # (String) $QAT_SECTION_NAME="SHIM"
+  # (Numeric) $POLL_DELAY=2000000
+  # To change default values,
+  # provide env vars in deployment specs for the container.
+  envoy-conf.yaml: |
+    static_resources:
+      listeners:
+      - address:
+          socket_address:
+            address: 0.0.0.0
+            port_value: 9000
+        filter_chains:
+          tls_context:
+            common_tls_context:
+              private_key_operations:
+                provider_name: qat
+                typed_config:
+                  "@type": "type.googleapis.com/qat.QatPrivateKeyOperationsConfig"
+                  section_name: ${QAT_SECTION_NAME}
+                  poll_delay: ${POLL_DELAY}
+              tls_certificates:
+                certificate_chain: { "filename": "/etc/envoy/tls/tls.crt" }
+                private_key: { "filename": "/etc/envoy/tls/tls.key" }
+          filters:
+          - name: envoy.http_connection_manager
+            config:
+              codec_type: auto
+              stat_prefix: ingress_http
+              route_config:
+                name: local_route
+                virtual_hosts:
+                - name: backend
+                  domains:
+                  - "*"
+                  routes:
+                  - match: { prefix: / }
+                    direct_response: { status: 200 }
+              http_filters:
+              - name: envoy.router
+                config: {}
+    admin:
+      access_log_path: "/dev/null"
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 9001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: boringssl-envoy
+  labels:
+    app: boringssl-envoy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: boringssl-envoy
+  template:
+    metadata:
+      labels:
+        app: boringssl-envoy
+    spec:
+      containers:
+        - name: envoy
+          image: envoy-boringssl-qat:devel
+          securityContext:
+            privileged: true
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--cpuset-threads"
+          env:
+            # Replace these next env var values to see reflected in the running
+            # envoy config.
+            - name: "QAT_SECTION_NAME"
+              value: "SHIM"
+            - name: "POLL_DELAY"
+              value: "2000000"
+          resources:
+            limits:
+              qat.intel.com/cy1_dc0: 1
+              cpu: 3
+              memory: "2G"
+            requests:
+              cpu: 3
+              memory: "2G"
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - name: tls
+              mountPath: /etc/envoy/tls
+              readOnly: true
+            - name: config
+              mountPath: /etc/envoy/config
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: envoy-tls-secret
+        - name: config
+          configMap:
+            name: boringssl-envoy-config
