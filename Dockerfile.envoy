@@ -1,6 +1,6 @@
 FROM debian:sid as builder
 
-ADD qat1.7.l.4.3.0-00033.tar.gz .
+ADD qat1.7.l.4.4.0-00023.tar.gz .
 ADD openssl openssl
 ADD QAT_Engine QAT_Engine
 ADD envoy envoy
