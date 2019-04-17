@@ -20,6 +20,40 @@ function uninstall_k8s {
     ansible-playbook -vvv -i ./inventory/hosts.ini $kubespray_folder/reset.yml --become
 }
 
+# _install_docker() - Download and install docker-engine
+function _install_docker {
+    if docker version &>/dev/null; then
+        return
+    fi
+
+    source /etc/os-release || source /usr/lib/os-release
+    case ${ID,,} in
+        clear-linux-os)
+            sudo -E swupd bundle-add containers-basic
+            sudo systemctl unmask docker.service
+        ;;
+        *)
+            curl -fsSL https://get.docker.com/ | sh
+        ;;
+    esac
+
+    sudo mkdir -p /etc/systemd/system/docker.service.d
+    if [ -n "$HTTP_PROXY" ]; then
+        echo "[Service]" | sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf
+        echo "Environment=\"HTTP_PROXY=$HTTP_PROXY\"" | sudo tee --append /etc/systemd/system/docker.service.d/http-proxy.conf
+    fi
+    if [ -n "$HTTPS_PROXY" ]; then
+        echo "[Service]" | sudo tee /etc/systemd/system/docker.service.d/https-proxy.conf
+        echo "Environment=\"HTTPS_PROXY=$HTTPS_PROXY\"" | sudo tee --append /etc/systemd/system/docker.service.d/https-proxy.conf
+    fi
+    if [ -n "$NO_PROXY" ]; then
+        echo "[Service]" | sudo tee /etc/systemd/system/docker.service.d/no-proxy.conf
+        echo "Environment=\"NO_PROXY=$NO_PROXY\"" | sudo tee --append /etc/systemd/system/docker.service.d/no-proxy.conf
+    fi
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+}
+
 # install_k8s() - Install Kubernetes using kubespray tool
 function install_k8s {
     echo "Deploying kubernetes"
@@ -34,39 +68,63 @@ function install_k8s {
                 sudo yum install -y git
             ;;
             clear-linux-os)
-                sudo systemctl unmask docker.service
+                sudo swupd bundle-add git
             ;;
         esac
-        #sudo git clone https://github.com/kubernetes-sigs/kubespray $kubespray_folder
-        sudo git clone https://github.com/electrocucaracha/kubespray $kubespray_folder
+        sudo git clone https://github.com/electrocucaracha/kubespray $kubespray_folder -b fix_runc_path
         sudo chown -R "$USER" $kubespray_folder
-        pushd $kubespray_folder
-        #git checkout release-2.9
+        pushd $kubespray_folder || exit
         sudo -E pip install -r requirements.txt
-        popd
+        popd || exit
 
         echo "Kubespray configuration"
-
-        rm -f ./inventory/group_vars/all.yml 2> /dev/null
-        echo "kubeadm_enabled: true" | tee ./inventory/group_vars/all.yml
+        echo "kubeadm_enabled: true" > ./inventory/group_vars/all.yml
+        sed -i 's/^etcd_deployment_type: .*$/etcd_deployment_type: docker/;s/^kubelet_deployment_type: .*$/kubelet_deployment_type: docker/;s/^container_manager: .*$/container_manager: docker/' ./inventory/group_vars/k8s-cluster.yml
+        if [[ "${CONTAINER_MANAGER:-docker}" == "crio" ]]; then
+            echo "CRI-O configuration"
+            {
+            echo "download_container: false"
+            echo "skip_downloads: false"
+            } >> ./inventory/group_vars/all.yml
+            sudo mkdir -p /etc/systemd/system/crio.service.d/
+            if [ -n "$HTTP_PROXY" ]; then
+                echo "[Service]" | sudo tee /etc/systemd/system/crio.service.d/http-proxy.conf
+                echo "Environment=\"HTTP_PROXY=$HTTP_PROXY\"" | sudo tee --append /etc/systemd/system/crio.service.d/http-proxy.conf
+            fi
+            if [ -n "$HTTPS_PROXY" ]; then
+                echo "[Service]" | sudo tee /etc/systemd/system/crio.service.d/https-proxy.conf
+                echo "Environment=\"HTTPS_PROXY=$HTTPS_PROXY\"" | sudo tee --append /etc/systemd/system/crio.service.d/https-proxy.conf
+            fi
+            if [ -n "$NO_PROXY" ]; then
+                echo "[Service]" | sudo tee /etc/systemd/system/crio.service.d/no-proxy.conf
+                echo "Environment=\"NO_PROXY=$NO_PROXY\"" | sudo tee --append /etc/systemd/system/crio.service.d/no-proxy.conf
+            fi
+        fi
         if [[ ${HTTP_PROXY+x} = "x" ]]; then
-             echo "http_proxy: \"$HTTP_PROXY\"" | tee --append ./inventory/group_vars/all.yml
+            echo "http_proxy: \"$HTTP_PROXY\"" | tee --append ./inventory/group_vars/all.yml
         fi
         if [[ ${HTTPS_PROXY+x} = "x" ]]; then
             echo "https_proxy: \"$HTTPS_PROXY\"" | tee --append ./inventory/group_vars/all.yml
         fi
+        if [[ ${NO_PROXY+x} = "x" ]]; then
+            echo "no_proxy: \"$NO_PROXY\"" | tee --append ./inventory/group_vars/all.yml
+        fi
+        _install_docker
     fi
 
-    sudo mkdir -p /etc/bash_completion.d
+    # TODO: ClearLinux's workarounds
+    sudo mkdir -p /etc/bash_completion.d # https://github.com/kubernetes-sigs/kubespray/pull/4543
+    sudo systemctl unmask docker.service # https://github.com/kubernetes-sigs/kubespray/pull/4583
+
     ansible-playbook -vvv -i ./inventory/hosts.ini $kubespray_folder/cluster.yml --become | tee setup-kubernetes.log
+    sudo usermod -aG docker "$USER"
 
     for vol in vol1 vol2 vol3; do
         if [[ ! -d /mnt/disks/$vol ]]; then
-            sudo mkdir /mnt/disks/$vol
+            sudo mkdir -p /mnt/disks/$vol
             sudo mount -t tmpfs -o size=5G $vol /mnt/disks/$vol
         fi
     done
-    sudo -E gpasswd -a "$USER" docker
 
     # Configure environment
     mkdir -p "$HOME/.kube"

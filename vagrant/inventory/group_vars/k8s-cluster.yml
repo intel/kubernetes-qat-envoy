@@ -53,3 +53,12 @@ kube_proxy_mode: iptables
 # Helm deployment
 helm_enabled: true
 local_volume_provisioner_enabled: true
+
+# Settings for containerized control plane (etcd/kubelet/secrets)
+etcd_deployment_type: docker
+
+# Controls which platform to deploy kubelet on. Available options are host, rkt, and docker.
+kubelet_deployment_type: docker
+
+# Container for runtime
+container_manager: docker

@@ -28,11 +28,13 @@ if ENV['no_proxy'] != nil or ENV['NO_PROXY']
   end
 end
 
+container_runtime = (ENV['QAT_CONTAINER_RUNTIME'] || :docker).to_sym
 distro = (ENV['QAT_DISTRO'] || :centos).to_sym
 vagrant_root = File.dirname(__FILE__)
 vagrant_root.slice! "vagrant"
 puts "[INFO] Shared folder: #{vagrant_root}"
-puts "[INFO] Linux Distro: #{distro} "
+puts "[INFO] Linux Distro: #{distro}"
+puts "[INFO] Runtime container: #{container_runtime}"
 
 Vagrant.configure("2") do |config|
   config.vm.provider :libvirt
@@ -56,7 +58,7 @@ Vagrant.configure("2") do |config|
     config.vm.provision :reload
   config.vm.provision 'shell', privileged: false do |sh|
     sh.env = {
-      'JENKINS_HOME': '/home/vagrant'
+      'CONTAINER_MANAGER': "#{container_runtime}"
     }
     sh.inline = <<-SHELL
       cd #{vagrant_root}
