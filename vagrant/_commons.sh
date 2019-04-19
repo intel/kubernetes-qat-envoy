@@ -15,13 +15,13 @@ set -o nounset
 # Kubespray configuration values
 kubespray_folder=/opt/kubespray
 
-# uninstall_k8s() - Uninstall Kuberentes deployment
+# uninstall_k8s() - Uninstall Kubernetes deployment
 function uninstall_k8s {
     ansible-playbook -vvv -i ./inventory/hosts.ini $kubespray_folder/reset.yml --become
 }
 
-# _install_docker() - Download and install docker-engine
-function _install_docker {
+# install_docker() - Download and install docker-engine
+function install_docker {
     if docker version &>/dev/null; then
         return
     fi
@@ -52,6 +52,7 @@ function _install_docker {
     fi
     sudo systemctl daemon-reload
     sudo systemctl restart docker
+    sudo usermod -aG docker "$USER"
 }
 
 # install_k8s() - Install Kubernetes using kubespray tool
@@ -71,21 +72,24 @@ function install_k8s {
                 sudo swupd bundle-add git
             ;;
         esac
-        sudo git clone https://github.com/electrocucaracha/kubespray $kubespray_folder -b fix_runc_path
+        sudo git clone --depth 1 https://github.com/kubernetes-sigs/kubespray $kubespray_folder -b release-2.10
         sudo chown -R "$USER" $kubespray_folder
-        pushd $kubespray_folder || exit
-        sudo -E pip install -r requirements.txt
-        popd || exit
+        sudo -E pip install -r $kubespray_folder/requirements.txt
 
         echo "Kubespray configuration"
         echo "kubeadm_enabled: true" > ./inventory/group_vars/all.yml
-        sed -i 's/^etcd_deployment_type: .*$/etcd_deployment_type: docker/;s/^kubelet_deployment_type: .*$/kubelet_deployment_type: docker/;s/^container_manager: .*$/container_manager: docker/' ./inventory/group_vars/k8s-cluster.yml
         if [[ "${CONTAINER_MANAGER:-docker}" == "crio" ]]; then
             echo "CRI-O configuration"
             {
             echo "download_container: false"
             echo "skip_downloads: false"
             } >> ./inventory/group_vars/all.yml
+            sed -i 's/^etcd_deployment_type: .*$/etcd_deployment_type: host/' ./inventory/group_vars/k8s-cluster.yml
+            sed -i 's/^kubelet_deployment_type: .*$/kubelet_deployment_type: host/' ./inventory/group_vars/k8s-cluster.yml
+            sed -i 's/^container_manager: .*$/container_manager: crio/' ./inventory/group_vars/k8s-cluster.yml
+            # TODO: https://github.com/kubernetes-sigs/kubespray/issues/4737
+            sed -i 's/^kube_version: .*$/kube_version: v1.13.5/' ./inventory/group_vars/k8s-cluster.yml
+            # (TODO): https://github.com/kubernetes-sigs/kubespray/pull/4607
             sudo mkdir -p /etc/systemd/system/crio.service.d/
             if [ -n "$HTTP_PROXY" ]; then
                 echo "[Service]" | sudo tee /etc/systemd/system/crio.service.d/http-proxy.conf
@@ -109,15 +113,9 @@ function install_k8s {
         if [[ ${NO_PROXY+x} = "x" ]]; then
             echo "no_proxy: \"$NO_PROXY\"" | tee --append ./inventory/group_vars/all.yml
         fi
-        _install_docker
     fi
 
-    # TODO: ClearLinux's workarounds
-    sudo mkdir -p /etc/bash_completion.d # https://github.com/kubernetes-sigs/kubespray/pull/4543
-    sudo systemctl unmask docker.service # https://github.com/kubernetes-sigs/kubespray/pull/4583
-
     ansible-playbook -vvv -i ./inventory/hosts.ini $kubespray_folder/cluster.yml --become | tee setup-kubernetes.log
-    sudo usermod -aG docker "$USER"
 
     for vol in vol1 vol2 vol3; do
         if [[ ! -d /mnt/disks/$vol ]]; then

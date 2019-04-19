@@ -42,6 +42,7 @@ sudo mkdir -p /etc/ansible/
 sudo cp ./ansible.cfg /etc/ansible/ansible.cfg
 sudo -E pip install ansible==2.7.10
 ansible-galaxy install -r ./galaxy-requirements.yml --ignore-errors
+install_docker
 
 # QAT Driver installation
 ansible-playbook -vvv -i ./inventory/hosts.ini configure-qat.yml | tee setup-qat.log
