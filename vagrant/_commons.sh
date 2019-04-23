@@ -77,7 +77,9 @@ function install_k8s {
         sudo -E pip install -r $kubespray_folder/requirements.txt
 
         echo "Kubespray configuration"
-        echo "kubeadm_enabled: true" > ./inventory/group_vars/all.yml
+        mkdir -p ./inventory/group_vars/
+        cp all.yml ./inventory/group_vars/all.yml
+        cp k8s-cluster.yml ./inventory/group_vars/k8s-cluster.yml
         if [[ "${CONTAINER_MANAGER:-docker}" == "crio" ]]; then
             echo "CRI-O configuration"
             {
@@ -174,4 +176,47 @@ function install_dashboard {
     if ! helm ls | grep -e metrics-dashboard; then
         helm install stable/grafana --name metrics-dashboard -f grafana_values.yml
     fi
+}
+
+# parse_yaml() - Function that returns the yaml values of a given key
+function parse_yaml {
+    python -c "import yaml;print(yaml.safe_load(open('$1'))$2)"
+}
+
+# vercmp() - Function that compares two versions
+function vercmp {
+    local v1=$1
+    local op=$2
+    local v2=$3
+    local result
+
+    # sort the two numbers with sort's "-V" argument.  Based on if v2
+    # swapped places with v1, we can determine ordering.
+    result=$(echo -e "$v1\n$v2" | sort -V | head -1)
+
+    case $op in
+        "==")
+            [ "$v1" = "$v2" ]
+            return
+            ;;
+        ">")
+            [ "$v1" != "$v2" ] && [ "$result" = "$v2" ]
+            return
+            ;;
+        "<")
+            [ "$v1" != "$v2" ] && [ "$result" = "$v1" ]
+            return
+            ;;
+        ">=")
+            [ "$result" = "$v2" ]
+            return
+            ;;
+        "<=")
+            [ "$result" = "$v1" ]
+            return
+            ;;
+        *)
+            die $LINENO "unrecognised op: $op"
+            ;;
+    esac
 }

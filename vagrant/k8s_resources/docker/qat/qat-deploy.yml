@@ -40,7 +40,7 @@ spec:
             privileged: true
           resources:
             limits:
-              qat.intel.com/cy1_dc0: 1
+              qat.intel.com/generic: 1
               cpu: 2
           volumeMounts:
             - name: tls

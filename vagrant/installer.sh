@@ -52,5 +52,29 @@ ansible-playbook -vvv -i ./inventory/hosts.ini configure-qat.yml | tee setup-qat
 install_k8s
 
 # QAT Plugin installation
+install_docker
 ansible-playbook -vvv -i ./inventory/hosts.ini configure-qat-envoy.yml | tee setup-qat-envoy.log
+
+# Kata containers configuration
+if [[ "${CONTAINER_MANAGER:-docker}" == "crio" ]]; then
+    sudo -E pip install PyYAML
+    kube_version=$(parse_yaml inventory/group_vars/k8s-cluster.yml "['kube_version']")
+    if vercmp "${kube_version#*v}" '<' 1.14; then
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/release-1.13/cluster/addons/runtimeclass/runtimeclass_crd.yaml
+        kubectl apply -f kata-qemu.yml
+    else
+        kubectl apply -f https://raw.githubusercontent.com/clearlinux/cloud-native-setup/master/clr-k8s-examples/8-kata/kata-qemu-runtimeClass.yaml
+    fi
+
+    kubectl apply -f https://raw.githubusercontent.com/kata-containers/packaging/master/kata-deploy/kata-rbac.yaml
+    kubectl apply -f https://raw.githubusercontent.com/kata-containers/packaging/master/kata-deploy/kata-deploy.yaml
+    sudo docker run -d -p 5000:5000 --restart=always --name registry registry:2
+    for img in intel-qat-plugin envoy-qat; do
+        sudo docker tag "${img}:devel" "localhost:5000/${img}:devel"
+        sudo docker push "localhost:5000/${img}:devel"
+    done
+    KUBE_EDITOR="sed -i 's|\sintel-qat-plugin:devel| localhost:5000/intel-qat-plugin:devel|g'" kubectl edit daemonset intel-qat-plugin
+    # TODO: Improve this for a wait-loop instruction
+    sleep 180
+fi
 ./postchecks_qat_plugin.sh

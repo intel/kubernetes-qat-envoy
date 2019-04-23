@@ -34,5 +34,4 @@ if [[ ${NO_PROXY+x} = "x" ]]; then
     done
 fi
 
-#echo "Making sure the system clock is accurate..."
-#sudo date -s "$(wget -qSO- --max-redirect=0 google.com 2>&1 | grep Date: | cut -d' ' -f5-8)Z"
+# TODO: Ensure that system time is accurated

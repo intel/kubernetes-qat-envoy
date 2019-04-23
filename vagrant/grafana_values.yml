@@ -156,7 +156,7 @@ dashboards:
               "timeFrom": null,
               "timeRegions": [],
               "timeShift": null,
-              "title": "Requests per Second QAT",
+              "title": "Requests per Second QAT (Higher is better)",
               "tooltip": {
                 "shared": true,
                 "sort": 0,
@@ -316,7 +316,7 @@ dashboards:
               "timeFrom": null,
               "timeRegions": [],
               "timeShift": null,
-              "title": "Request duration QAT",
+              "title": "Request duration QAT (Lower is better)",
               "tooltip": {
                 "shared": true,
                 "sort": 0,
@@ -434,7 +434,7 @@ dashboards:
               "timeFrom": null,
               "timeRegions": [],
               "timeShift": null,
-              "title": "Requests Per Second Non-QAT",
+              "title": "Requests Per Second Non-QAT (Higher is better)",
               "tooltip": {
                 "shared": true,
                 "sort": 0,
@@ -594,7 +594,7 @@ dashboards:
               "timeFrom": null,
               "timeRegions": [],
               "timeShift": null,
-              "title": "Request duration Non-QAT",
+              "title": "Request duration Non-QAT (Lower is better)",
               "tooltip": {
                 "shared": true,
                 "sort": 0,

@@ -28,13 +28,13 @@ if ENV['no_proxy'] != nil or ENV['NO_PROXY']
   end
 end
 
-container_runtime = (ENV['QAT_CONTAINER_RUNTIME'] || :docker).to_sym
+container_manager = (ENV['QAT_CONTAINER_MANAGER'] || :docker).to_sym
 distro = (ENV['QAT_DISTRO'] || :centos).to_sym
 vagrant_root = File.dirname(__FILE__)
 vagrant_root.slice! "vagrant"
 puts "[INFO] Shared folder: #{vagrant_root}"
 puts "[INFO] Linux Distro: #{distro}"
-puts "[INFO] Runtime container: #{container_runtime}"
+puts "[INFO] Container manager: #{container_manager}"
 
 Vagrant.configure("2") do |config|
   config.vm.provider :libvirt
@@ -58,9 +58,10 @@ Vagrant.configure("2") do |config|
     config.vm.provision :reload
   config.vm.provision 'shell', privileged: false do |sh|
     sh.env = {
-      'CONTAINER_MANAGER': "#{container_runtime}"
+      'CONTAINER_MANAGER': "#{container_manager}"
     }
     sh.inline = <<-SHELL
+      echo "export CONTAINER_MANAGER=$CONTAINER_MANAGER" >> ~/.bashrc
       cd #{vagrant_root}
       sed -ri  "s|^qat_envoy_dest:.*$|qat_envoy_dest: \"$(pwd)\"|g" ./vagrant/krd-vars.yml
       cd ./vagrant/
