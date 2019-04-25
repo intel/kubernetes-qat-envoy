@@ -1,0 +1,11 @@
+[Unit]
+Description=Service for updating the out-of-tree QAT driver after a kernel update.
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/check-qat-kernel.sh
+PrivateTmp=yes
+Before=kubelet.service
+
+[Install]
+WantedBy=multi-user.target
