@@ -1,9 +1,12 @@
 Example implementation of SDS server
 ====================================
 
-[This file](./sds.go) contains the code of SDS server that can be used for experimenting with
-SDS and Envoy. By no means it can be used in production since it can serve
-only one Envoy instance and it's here for illustrative purposes only.
+[This file](./sds.go) contains the code of Secret Discovery Service
+(SDS) server that can be used for experimenting with SDS and Envoy. By
+no means it can be used in production since it can serve only one Envoy
+instance and it's here for illustrative purposes only.  You can read
+more about SDS [in Envoy
+documentation](https://www.envoyproxy.io/docs/envoy/latest/configuration/secret).
 
 Copy the file to a directory inside your Go workspace, e.g. `$HOME/go/src/sds/sds.go`.
 
@@ -30,7 +33,7 @@ $ $HOME/go/src/sds/sds &
 ```
 
 Finally you can launch Envoy. For that the following Envoy config needs to be
-placed to a file, e.g. $HOME/go/src/sds/envoy.yaml (Do not forget to update it with
+placed to a file, e.g. `$HOME/go/src/sds/envoy.yaml` (do not forget to update it with
 your domain names you used as CN when created the SSL keys).
 
 ```yaml
