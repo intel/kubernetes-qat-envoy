@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is a technical guide for getting Intel Quick Assist Technology (QAT) accelerated Envoy* running on a bare-metal Kubernetes* cluster. You may need to adapt some commands to your particular cluster setup. You need to first install the QAT driver on every node which has QAT hardware installed. The driver used in this setup is located at https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.3.0-00033.tar.gz, and the package contains a README file which explains the installation.
+This is a technical guide for getting Intel Quick Assist Technology (QAT) accelerated Envoy* running on a bare-metal Kubernetes* cluster. You may need to adapt some commands to your particular cluster setup. You need to first install the QAT driver on every node which has QAT hardware installed. The driver used in this setup is located at https://01.org/sites/default/files/downloads/qat1.7.l.4.5.0-00034.tar.gz, and the package contains a README file which explains the installation.
 
 ## Clone this repository (with submodules) and fetch the QAT driver
 
@@ -13,7 +13,12 @@ Clone this repository with submodules:
 Then go to the created directory and fetch the QAT driver:
 
     $ cd kubernetes-qat-envoy
-    $ wget https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.3.0-00033.tar.gz
+    $ wget https://01.org/sites/default/files/downloads/qat1.7.l.4.5.0-00034.tar.gz
+
+Check that the correct archive has been loaded by calculating its sha256 checksum:
+
+    $ sha256sum qat1.7.l.4.5.0-00034.tar.gz
+    c42a3afc1a5c76d441eaca8b97dc1f9ee64939ec001539ee1a2f3b39b7543c8e  qat1.7.l.4.5.0-00034.tar.gz
 
 ## Create a container for QAT-accelerated Envoy
 

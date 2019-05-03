@@ -1,6 +1,6 @@
 FROM debian:sid as builder
 
-ADD qat1.7.l.4.4.0-00023.tar.gz .
+ADD qat1.7.l.4.5.0-00034.tar.gz .
 ADD openssl openssl
 ADD QAT_Engine QAT_Engine
 ADD envoy envoy
@@ -27,7 +27,7 @@ ENV ICP_ENV_DIR /quickassist/build_system/build_files/env_files
 ENV ICP_BUILDSYSTEM_PATH /quickassist/build_system
 ENV KERNEL_SOURCE_ROOT /tmp
 
-RUN  ./configure --enable-qat-uio
+RUN  ./configure --disable-qat-lkcf
 
 RUN make -f quickassist/Makefile user
 RUN make adf-ctl-all
