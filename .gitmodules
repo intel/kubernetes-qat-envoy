@@ -8,8 +8,8 @@
 	branch = section_name_env
 [submodule "intel-device-plugins-for-kubernetes"]
 	path = intel-device-plugins-for-kubernetes
-	url = https://github.com/rojkov/intel-device-plugins-for-kubernetes.git
-	branch = qat2
+	url = https://github.com/intel/intel-device-plugins-for-kubernetes.git
+	branch = master
 [submodule "openssl"]
 	path = openssl
 	url = https://github.com/openssl/openssl.git
