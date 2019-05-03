@@ -34,12 +34,12 @@ Create a Kubernetes* secret out of the certificate and the key:
 ## Create QAT Device Plugin daemonset
 
     $ cd intel-device-plugins-for-kubernetes
-    # make intel-qat2-plugin # this builds a docker image with the plugin
+    # make intel-qat-plugin # this builds a docker image with the plugin
     $ cd ..
 
 Again, you’ll need to make sure that the Docker image is available on all nodes.
 
-    $ kubectl apply -f ./intel-device-plugins-for-kubernetes/deployments/qat2_plugin/qat2_plugin.yaml
+    $ kubectl apply -f ./intel-device-plugins-for-kubernetes/deployments/qat_plugin/qat_plugin_kernel_mode.yaml
 
 Make sure the QAT kernel driver is configured properly on the node. The exact steps depend on your hardware. The instructions in this document have been tested with C62x chipset QAT accelerator. For this hardware, copy the content of `configs/c6xx_devX.conf` to the node as `/etc/c6xx_dev0.conf`, `/etc/c6xx_dev1.conf` and `/etc/c6xx_dev2.conf`. After that restart the QAT driver on the node:
 
