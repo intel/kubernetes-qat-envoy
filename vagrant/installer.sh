@@ -24,6 +24,10 @@ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 chmod og-wx ~/.ssh/authorized_keys
 
 # Install dependencies
+swap_dev=$(sed -n -e 's#^/dev/\([0-9a-z]*\).*#dev-\1.swap#p' /proc/swaps)
+if [ -n "$swap_dev" ]; then
+    sudo systemctl mask "$swap_dev"
+fi
 sudo swapoff -a
 if [ -e /etc/fstab ]; then
     sudo sed -i '/ swap / s/^/#/' /etc/fstab
