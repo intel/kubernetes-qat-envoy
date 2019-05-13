@@ -79,8 +79,10 @@
 #      make:
 #        chdir: "{{ qat_driver_dest }}/intel-device-plugins-for-kubernetes"
 #        target: intel-qat-plugin
+    - name: create qat device configmap
+      command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat_plugin/qat_plugin_default_configmap.yaml"
     - name: create qat device plugin docker daemonset
-      command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat_plugin/"
+      command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat_plugin/qat_plugin.yaml"
     - name: get qat devices
       shell: /usr/local/bin/adf_ctl status | grep up | awk '{print $4 substr($1, 4)}' | tr -d ','
       register: qat_devices
