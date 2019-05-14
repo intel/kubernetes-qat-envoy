@@ -7,7 +7,10 @@ ADD envoy envoy
 
 # Add bundles and deps
 RUN rm -rf /run/lock/clrtrust.lock
-RUN clrtrust generate && swupd update && swupd bundle-add os-core-dev
+RUN clrtrust generate
+# Support envoy build, returning to latest version of clearlinux with gcc version 8.x.x
+RUN swupd verify --fix -m 28970 --force
+RUN swupd bundle-add os-core-dev --skip-diskspace-check
 RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/0.19.2/bazel-0.19.2-installer-linux-x86_64.sh && \
     chmod +x bazel-0.19.2-installer-linux-x86_64.sh && \
     ./bazel-0.19.2-installer-linux-x86_64.sh --user
