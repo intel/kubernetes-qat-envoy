@@ -176,6 +176,9 @@ function install_dashboard {
     if ! helm ls | grep -e metrics-dashboard; then
         helm install stable/grafana --name metrics-dashboard -f grafana_values.yml
     fi
+    if ! helm ls | grep -e monitoring; then
+        helm install stable/prometheus --name monitoring -f prometheus_values.yml
+    fi
 }
 
 # parse_yaml() - Function that returns the yaml values of a given key
