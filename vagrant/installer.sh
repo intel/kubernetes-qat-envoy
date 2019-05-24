@@ -77,8 +77,11 @@ if [[ "${CONTAINER_MANAGER:-docker}" == "crio" ]]; then
         sudo docker tag "${img}:devel" "localhost:5000/${img}:devel"
         sudo docker push "localhost:5000/${img}:devel"
     done
-    KUBE_EDITOR="sed -i 's|\sintel-qat-plugin:devel| localhost:5000/intel-qat-plugin:devel|g'" kubectl edit daemonset intel-qat-plugin
-    # TODO: Improve this for a wait-loop instruction
-    sleep 180
+    kubectl set image daemonset/intel-qat-plugin intel-qat-plugin=localhost:5000/intel-qat-plugin:devel
+    attempts=0
+    until kubectl rollout status daemonset/intel-qat-plugin  || [ $attempts -eq 60 ]; do
+        attempts+=1
+        sleep 10
+    done
 fi
 ./postchecks_qat_plugin.sh
