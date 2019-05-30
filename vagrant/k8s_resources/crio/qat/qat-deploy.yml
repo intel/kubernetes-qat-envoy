@@ -36,7 +36,7 @@ spec:
             - "/scripts/start-envoy.sh"
           resources:
             limits:
-              qat.intel.com/generic: 1
+              qat.intel.com/cy1_dc0: 1
               cpu: 2
           volumeMounts:
             - name: tls

@@ -49,7 +49,6 @@ ansible-galaxy install -r ./galaxy-requirements.yml --ignore-errors
 
 # QAT Driver installation
 ansible-playbook -vvv -i ./inventory/hosts.ini configure-qat.yml | tee setup-qat.log
-./postchecks_qat_driver.sh
 
 # Kubernetes installation
 install_k8s
@@ -76,11 +75,6 @@ if [[ "${CONTAINER_MANAGER:-docker}" == "crio" ]]; then
         sudo docker tag "${img}:devel" "localhost:5000/${img}:devel"
         sudo docker push "localhost:5000/${img}:devel"
     done
-    kubectl set image daemonset/intel-qat-plugin intel-qat-plugin=localhost:5000/intel-qat-plugin:devel
-    attempts=0
-    until kubectl rollout status daemonset/intel-qat-plugin  || [ $attempts -eq 60 ]; do
-        attempts+=1
-        sleep 10
-    done
+    kubectl set image daemonset/intel-qat-kernel-plugin intel-qat-kernel-plugin=localhost:5000/intel-qat-plugin:devel
 fi
 ./postchecks_qat_plugin.sh

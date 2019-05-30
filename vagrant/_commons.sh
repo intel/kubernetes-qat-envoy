@@ -140,27 +140,6 @@ function install_k8s {
     # Configure environment
     mkdir -p "$HOME/.kube"
     cp ./inventory/artifacts/admin.conf "$HOME/.kube/config"
-    _configure_dashboard
-}
-
-# _configure_dashboard() - Configure the Kubernetes dashboard and creates
-# a information file with the authentication credentials
-function _configure_dashboard {
-    local info_file=$HOME/kubernetes_info.txt
-
-    # Expose Dashboard using NodePort
-    node_port=30080
-    KUBE_EDITOR="sed -i \"s|type\: ClusterIP|type\: NodePort|g\"" kubectl -n kube-system edit service kubernetes-dashboard
-    KUBE_EDITOR="sed -i \"s|nodePort\: .*|nodePort\: $node_port|g\"" kubectl -n kube-system edit service kubernetes-dashboard
-
-    master_ip=$(kubectl cluster-info | grep "Kubernetes master" | awk -F ":" '{print $2}')
-
-    printf "Kubernetes Info\n===============\n" > "$info_file"
-    {
-    echo "Dashboard URL: https:$master_ip:$node_port"
-    echo "Admin user: kube"
-    echo "Admin password: secret"
-    } >> "$info_file"
 }
 
 # install_dashboard() - Function that installs Helms, InfluxDB and Grafana Dashboard

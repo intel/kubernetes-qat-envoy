@@ -19,23 +19,18 @@ if ! sudo docker images | grep -E "envoy-qat.*devel"; then
     echo "envoy-qat:devel docker image doesn't exists"
     exit 1
 fi
+
+echo "Verifying intel-qat-plugin daemonset is available..."
+if ! kubectl rollout status daemonset/intel-qat-kernel-plugin --timeout=5m; then
+    echo "The Intel QAT daemonset plugin is not available yet"
+    exit 1
+fi
+
 if [[ "${CONTAINER_MANAGER:-docker}" == "crio" ]]; then
     if ! sudo crictl images | grep -E "intel-qat-plugin.*devel"; then
         echo "intel-qat-plugin:devel CRI-O image doesn't exists"
         exit 1
     fi
-fi
-
-echo "Verifying intel-qat-plugin daemonset is available..."
-if kubectl get daemonset intel-qat-plugin; then
-    plugin_daemonset=$(kubectl get daemonset intel-qat-plugin  --no-headers)
-    if [[ $(echo "$plugin_daemonset" | awk '{print $2}') != $(echo "$plugin_daemonset" | awk '{print $6}') ]]; then
-        echo "The Intel QAT daemonset plugin is not available yet"
-        exit 1
-    fi
-else
-    echo "The Intel QAT daemonset plugin is not created"
-    exit 1
 fi
 
 qat_svc=$(sudo /etc/init.d/qat_service status | grep "There is .* QAT acceleration device(s) in the system:")

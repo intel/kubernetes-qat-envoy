@@ -40,11 +40,6 @@
               }
             }
       when: lookup('env','http_proxy') != "fooproxy" or lookup('env','https_proxy') != "fooproxy" or lookup('env','no_proxy') != "fooproxy"
-    - name: wait for kubernetes recovering
-      shell: "/usr/local/bin/kubectl get pods -o json -n kube-system"
-      register: kubectl_get_pods
-      until: kubectl_get_pods.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]
-      ignore_errors: True
     - name: get qat plugin pod name
       shell: "/usr/local/bin/kubectl get pods | grep intel-qat-plugin | awk '{print $1}'"
       register: intel_qat_plugin_pod
@@ -82,7 +77,7 @@
     - name: create qat device configmap
       command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat_plugin/qat_plugin_default_configmap.yaml"
     - name: create qat device plugin docker daemonset
-      command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat_plugin/qat_plugin.yaml"
+      command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat_plugin/qat_plugin_kernel_mode.yaml"
     - name: get qat devices
       shell: /usr/local/bin/adf_ctl status | grep up | awk '{print $4 substr($1, 4)}' | tr -d ','
       register: qat_devices
