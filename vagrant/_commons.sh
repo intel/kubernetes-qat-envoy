@@ -51,7 +51,7 @@ function install_docker {
         echo "Environment=\"NO_PROXY=$NO_PROXY\"" | sudo tee --append /etc/systemd/system/docker.service.d/no-proxy.conf
     fi
     sudo systemctl daemon-reload
-    sudo systemctl stop docker
+    sudo systemctl restart docker
     sudo usermod -aG docker "$USER"
     # NOTE: this installs runc in a kubespray non-expected folder https://github.com/kubernetes-sigs/kubespray/commit/2db289811261d90cdb335307a3ff43785fdca45a#diff-4cf53be44e33d00a3586c71ccf2028d2
     if [[ $(command -v runc ) == "/usr/sbin/runc" ]]; then
@@ -86,6 +86,12 @@ function install_k8s {
         cp all.yml ./inventory/group_vars/all.yml
         cp k8s-cluster.yml ./inventory/group_vars/k8s-cluster.yml
         if [[ "${CONTAINER_MANAGER:-docker}" == "crio" ]]; then
+            case ${ID,,} in
+                rhel|centos|fedora)
+                    sudo yum install -y wget
+                ;;
+            esac
+            wget -O $kubespray_folder/roles/container-engine/cri-o/templates/crio.conf.j2 https://raw.githubusercontent.com/kubernetes-sigs/kubespray/master/roles/container-engine/cri-o/templates/crio.conf.j2
             echo "CRI-O configuration"
             {
             echo "download_container: false"
