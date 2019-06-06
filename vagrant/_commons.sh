@@ -79,7 +79,10 @@ function install_k8s {
         esac
         sudo git clone --depth 1 https://github.com/kubernetes-sigs/kubespray $kubespray_folder -b $kubespray_version
         sudo chown -R "$USER" $kubespray_folder
-        sudo -E pip install -r $kubespray_folder/requirements.txt
+        pushd $kubespray_folder
+        sudo -E pip install -r ./requirements.txt
+        make mitogen
+        popd
 
         echo "Kubespray configuration"
         mkdir -p ./inventory/group_vars/
