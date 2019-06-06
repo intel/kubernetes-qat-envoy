@@ -64,7 +64,7 @@
 #        path: "{{ qat_envoy_dest }}"
 #        name: envoy-qat
 #        tag: devel
-      command: docker image build -t envoy-qat:devel --no-cache -f Dockerfile.envoy .
+      command: docker image build -t envoy-qat:devel --no-cache --pull -f Dockerfile.envoy .
       args:
         chdir: "{{ qat_envoy_dest }}"
     - name: create qat device plugin docker image
