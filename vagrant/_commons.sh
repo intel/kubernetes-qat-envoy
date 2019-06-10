@@ -51,12 +51,17 @@ function install_docker {
         echo "Environment=\"NO_PROXY=$NO_PROXY\"" | sudo tee --append /etc/systemd/system/docker.service.d/no-proxy.conf
     fi
     sudo systemctl daemon-reload
-    sudo systemctl restart docker
+    sudo systemctl stop docker
     sudo usermod -aG docker "$USER"
+    # NOTE: this installs runc in a kubespray non-expected folder https://github.com/kubernetes-sigs/kubespray/commit/2db289811261d90cdb335307a3ff43785fdca45a#diff-4cf53be44e33d00a3586c71ccf2028d2
+    if [[ $(command -v runc ) == "/usr/sbin/runc" ]]; then
+        sudo ln -s /usr/sbin/runc /usr/bin/runc
+    fi
 }
 
 # install_k8s() - Install Kubernetes using kubespray tool
 function install_k8s {
+    local kubespray_version=v2.10.3
     echo "Deploying kubernetes"
 
     if [[ ! -d $kubespray_folder ]]; then
@@ -72,7 +77,7 @@ function install_k8s {
                 sudo swupd bundle-add git
             ;;
         esac
-        sudo git clone --depth 1 https://github.com/kubernetes-sigs/kubespray $kubespray_folder -b release-2.10
+        sudo git clone --depth 1 https://github.com/kubernetes-sigs/kubespray $kubespray_folder -b $kubespray_version
         sudo chown -R "$USER" $kubespray_folder
         sudo -E pip install -r $kubespray_folder/requirements.txt
 
@@ -154,18 +159,17 @@ function _configure_dashboard {
 
 # install_dashboard() - Function that installs Helms, InfluxDB and Grafana Dashboard
 function install_dashboard {
-    local helm_version=v2.11.0
-    local helm_tarball=helm-${helm_version}-linux-amd64.tar.gz
-
     if ! command -v helm; then
-        wget http://storage.googleapis.com/kubernetes-helm/$helm_tarball
-        tar -zxvf $helm_tarball -C /tmp
-        rm $helm_tarball
-        sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
-    fi
+        curl -L https://git.io/get_helm.sh | bash
 
-    helm init
-    helm repo update
+        helm init --wait
+        kubectl create serviceaccount --namespace kube-system tiller
+        kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+        kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
+        kubectl rollout status deployment/tiller-deploy --timeout=5m --namespace kube-system
+        #helm init --service-account tiller --upgrade
+        helm repo update
+    fi
 
     if ! helm ls | grep -e metrics-db-qat; then
         helm install stable/influxdb --name metrics-db-qat -f influxdb_values.yml
