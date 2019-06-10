@@ -215,3 +215,30 @@ function vercmp {
             ;;
     esac
 }
+
+function generates_inventory_file {
+    hostname=$(hostname)
+
+    rm -rf ./inventory
+    mkdir ./inventory
+    cat << EOF > ./inventory/hosts.ini
+[all]
+$hostname
+
+[kube-master]
+$hostname
+
+[kube-node]
+$hostname
+
+[etcd]
+$hostname
+
+[qat-node]
+$hostname
+
+[k8s-cluster:children]
+kube-node
+kube-master
+EOF
+}
