@@ -11,6 +11,7 @@
 set -o nounset
 set -o pipefail
 
+local modify_host=0
 vagrant_version=2.2.4
 if ! vagrant version &>/dev/null; then
     enable_vagrant_install=true
@@ -22,18 +23,38 @@ fi
 
 function usage {
     cat <<EOF
-usage: $0 -p <PROVIDER>
+usage: $0 -p <PROVIDER> [options]
 Installation of vagrant and its dependencies in Linux OS
 
 Argument:
     -p  Vagrant provider
+
+Options:
+    -m  Modify the host to enable the required features to use QAT.
+        WARNING: System files are modified. The system should be rebooted manually.
 EOF
 }
 
-while getopts ":p:" OPTION; do
+function enable_iommu {
+    echo "Enabling Intel_iommu"
+    sudo sed -i "s|^GRUB_CMDLINE_LINUX\(.*\)\"|GRUB_CMDLINE_LINUX\1 intel_iommu=on\"|g" /etc/default/grub
+    grub_cfg=$(sudo readlink -e /etc/grub2.cfg)
+    if sudo [ -f "${grub_cfg}" ]; then
+        echo "Updating grub configuration file"
+        sudo grub2-mkconfig -o "${grub_cfg}"
+        echo "System reboot is required"
+        return
+    fi
+    echo "grub configuration file does not exist"
+}
+
+while getopts ":p:m" OPTION; do
     case $OPTION in
     p)
         provider=$OPTARG
+        ;;
+    m)
+        modify_host=1
         ;;
     \?)
         usage
@@ -150,6 +171,9 @@ case ${ID,,} in
         packages+=(nfs-utils nfs-utils-lib)
         ;;
     esac
+    if [ ${modify_host} == 1 ] &&  [ ! -d /sys/class/iommu/* ] ; then
+        enable_iommu
+    fi
     ;;
 
 esac
