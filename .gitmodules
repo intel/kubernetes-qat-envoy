@@ -4,8 +4,8 @@
 	branch = openssl-container
 [submodule "QAT_Engine"]
 	path = QAT_Engine
-	url = https://github.com/ipuustin/QAT_Engine.git
-	branch = section_name_env
+	url = https://github.com/intel/QAT_Engine.git
+	branch = master
 [submodule "intel-device-plugins-for-kubernetes"]
 	path = intel-device-plugins-for-kubernetes
 	url = https://github.com/intel/intel-device-plugins-for-kubernetes.git
