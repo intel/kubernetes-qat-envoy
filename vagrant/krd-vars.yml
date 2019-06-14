@@ -8,8 +8,19 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 ##############################################################################
 
-qat_driver_dest: "/tmp/qat"
-qat_driver_version: "1.7.l.4.3.0-00033"
-qat_driver_url: "https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat{{ qat_driver_version }}.tar.gz"
 # NOTE: Replace the `qat_envoy_dest` value with the current absolute path
 qat_envoy_dest: "/home/vagrant/kubernetes-qat-envoy/"
+qat_base_version: "1.7.l.4.4.0-00023"
+#qat_base_version: "1.7.l.4.3.0-00033"
+qat_driver_version: "{{ qat_base_version }}"
+qat_plugin_version: "{{ qat_base_version }}"
+qat_driver:
+  dest: "/tmp/qat"
+  url: "https://01.org/sites/default/files/downloads/qat{{ qat_driver_version }}.tar.gz"
+  #url: "https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat{{ qat_driver_version }}.tar.gz"
+qat_plugin:
+  dest: "{{ qat_envoy_dest }}/qat{{ qat_plugin_version }}.tar.gz"
+  url: "https://01.org/sites/default/files/downloads/qat{{ qat_driver_version }}.tar.gz"
+  #url: "https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat{{ qat_plugin_version }}.tar.gz"
+kata_dest: "/tmp/kata"
+container_manager:  "{{ lookup('env','CONTAINER_MANAGER') | default('docker', true) }}"

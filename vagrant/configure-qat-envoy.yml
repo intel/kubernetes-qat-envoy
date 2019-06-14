@@ -15,10 +15,9 @@
       include_vars:
         file: krd-vars.yml
     - name: retrieve QAT driver
-      become: no
       get_url:
-        url: "{{ qat_driver_url }}"
-        dest: "{{ qat_envoy_dest }}/qat{{ qat_driver_version }}.tar.gz"
+        url: "{{ qat_plugin.url }}"
+        dest: "{{ qat_plugin.dest }}"
     - name: configure docker client
       block:
       - name: create docker config folder
@@ -41,16 +40,11 @@
               }
             }
       when: lookup('env','http_proxy') != "fooproxy" or lookup('env','https_proxy') != "fooproxy" or lookup('env','no_proxy') != "fooproxy"
-    - name: wait for kubernetes recovering
-      shell: "/usr/local/bin/kubectl get pods -o json -n kube-system"
-      register: kubectl_get_pods
-      until: kubectl_get_pods.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]
-      ignore_errors: True
     - name: get qat plugin pod name
-      shell: "/usr/local/bin/kubectl get pods | grep intel-qat2-plugin | awk '{print $1}'"
+      shell: "/usr/local/bin/kubectl get pods | grep intel-qat-plugin | awk '{print $1}'"
       register: intel_qat_plugin_pod
     - name: delete qat plugin daemonset
-      command: "/usr/local/bin/kubectl delete daemonsets intel-qat2-plugin --now --force"
+      command: "/usr/local/bin/kubectl delete daemonsets intel-qat-plugin --now --force"
       ignore_errors: True
     - name: wait for destroying qat plugin
       shell: "/usr/local/bin/kubectl get pods {{ intel_qat_plugin_pod.stdout }}"
@@ -62,7 +56,7 @@
       ignore_errors: True
       loop:
         - envoy-qat
-        - intel-qat2-plugin
+        - intel-qat-plugin
     - name: build QAT-accelerated envoy image
 # NOTE: docker_image module doesn't take proxy values defined in ~/.docker/config.json
 #      docker_image:
@@ -70,24 +64,20 @@
 #        path: "{{ qat_envoy_dest }}"
 #        name: envoy-qat
 #        tag: devel
-      command: docker image build -t envoy-qat:devel -f Dockerfile.envoy .
+      command: docker image build -t envoy-qat:devel --no-cache --pull -f Dockerfile.envoy .
       args:
         chdir: "{{ qat_envoy_dest }}"
-    - name: create ssl certificate and private key
-      command: openssl req -x509 -new -batch -nodes -subj '/CN=localhost' -keyout /tmp/key.pem -out /tmp/cert.pem
-    - name: regitster the ssl certificate and private key into kubernetes
-      command: "/usr/local/bin/kubectl create secret tls envoy-tls-secret --cert /tmp/cert.pem --key /tmp/key.pem"
-      ignore_errors: True
     - name: create qat device plugin docker image
-      command: /bin/make intel-qat2-plugin
+      command: /bin/make intel-qat-plugin
       args:
         chdir: "{{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes"
 #      make:
 #        chdir: "{{ qat_driver_dest }}/intel-device-plugins-for-kubernetes"
-#        target: intel-qat2-plugin
+#        target: intel-qat-plugin
+    - name: create qat device configmap
+      command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat_plugin/qat_plugin_default_configmap.yaml"
     - name: create qat device plugin docker daemonset
-      command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat2_plugin/qat2_plugin.yaml"
-      ignore_errors: True
+      command: "/usr/local/bin/kubectl apply -f {{ qat_envoy_dest }}/intel-device-plugins-for-kubernetes/deployments/qat_plugin/qat_plugin_kernel_mode.yaml"
     - name: get qat devices
       shell: /usr/local/bin/adf_ctl status | grep up | awk '{print $4 substr($1, 4)}' | tr -d ','
       register: qat_devices

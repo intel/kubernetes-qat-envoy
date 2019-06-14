@@ -12,6 +12,7 @@
   become: yes
   roles:
     - role: geerlingguy.repo-epel
+      when: ansible_os_family == 'RedHat'
   tasks:
     - name: Load krd variables
       include_vars:
@@ -21,16 +22,16 @@
         - "{{ ansible_os_family }}.yml"
     - name: retrieve QAT driver
       get_url:
-        url: "{{ qat_driver_url }}"
+        url: "{{ qat_driver.url }}"
         dest: "/tmp/qat.tar.gz"
     - name: create qat folder
       file:
         state: directory
-        path: "{{ qat_driver_dest }}"
+        path: "{{ qat_driver.dest }}"
     - name: extract qat driver source code
       unarchive:
         src: "/tmp/qat.tar.gz"
-        dest: "{{ qat_driver_dest }}"
+        dest: "{{ qat_driver.dest }}"
         remote_src: yes
     - name: RedHat | install build tools
       yum:
@@ -68,15 +69,36 @@
     - name: configure qat driver source code
       command: ./configure --enable-qat-uio --enable-kapi
       args:
-        chdir: "{{ qat_driver_dest }}"
+        chdir: "{{ qat_driver.dest }}"
     - name: build qat driver
       make:
-        chdir: "{{ qat_driver_dest }}"
+        chdir: "{{ qat_driver.dest }}"
         target: "{{ item }}"
       loop:
         - clean
         - uninstall
         - install
+    - name: create qat_service systemd wrapper
+      blockinfile:
+        path: /etc/systemd/system/qat_service.service
+        create: yes
+        block: |
+          [Unit]
+          Description=Intel QuickAssist Technology service
+
+          [Service]
+          Type=forking
+          Restart=no
+          TimeoutSec=5min
+          IgnoreSIGPIPE=no
+          KillMode=process
+          GuessMainPID=no
+          RemainAfterExit=yes
+          ExecStart=/etc/init.d/qat_service start
+          ExecStop=/etc/init.d/qat_service stop
+
+          [Install]
+          WantedBy=multi-user.target
     - name: reload qat_service service
       service:
         name: "qat_service"

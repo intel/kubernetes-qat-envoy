@@ -1,0 +1,58 @@
+# SPDX-license-identifier: Apache-2.0
+##############################################################################
+# Copyright (c) 2019 Intel Corporation
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Apache License, Version 2.0
+# which accompanies this distribution, and is available at
+# http://www.apache.org/licenses/LICENSE-2.0
+##############################################################################
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-behind-envoy-qat
+  labels:
+    app: nginx-behind-envoy-qat
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-behind-envoy-qat
+  template:
+    metadata:
+      labels:
+        app: nginx-behind-envoy-qat
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+          securityContext:
+            privileged: true
+        - name: envoy-sidecar
+          image: envoy-qat:devel
+          imagePullPolicy: IfNotPresent
+          command:
+            - "/envoy-static"
+          args:
+            - "-c"
+            - "/etc/envoy/config/envoy-conf.yaml"
+          securityContext:
+            privileged: true
+          resources:
+            limits:
+              qat.intel.com/cy1_dc0: 1
+              cpu: 2
+          volumeMounts:
+            - name: tls
+              mountPath: /etc/envoy/tls
+              readOnly: true
+            - name: config
+              mountPath: /etc/envoy/config
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: envoy-tls-secret
+        - name: config
+          configMap:
+            name: envoy-sidecar-config

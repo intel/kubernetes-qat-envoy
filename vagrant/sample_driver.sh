@@ -13,7 +13,7 @@ set -o errexit
 #set -o xtrace
 
 # Driver validation
-qat_svc=$(sudo service qat_service status | grep "There is .* QAT acceleration device(s) in the system:")
+qat_svc=$(sudo /etc/init.d/qat_service status | grep "There is .* QAT acceleration device(s) in the system:")
 if [[ "$qat_svc" != *"0"* ]]; then
     echo "Running QAT sample's code"
     pushd /tmp/qat

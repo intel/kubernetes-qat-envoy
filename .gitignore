@@ -1,6 +1,5 @@
 vagrant/.vagrant
-vagrant/inventory/artifacts/
-vagrant/inventory/group_vars/all.yml
+vagrant/inventory/
 vagrant/roles
 qat*.tar.gz
 *.retry
