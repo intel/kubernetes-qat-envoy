@@ -1,59 +1,12 @@
 FROM debian:sid as builder
 
-ADD qat1.7.l.4.5.0-00034.tar.gz .
 ADD openssl openssl
 ADD QAT_Engine QAT_Engine
 ADD envoy envoy
+ADD scripts scripts
+ADD versions.yaml versions.yaml
 
-RUN mkdir -p /usr/share/man/man1 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=863199
-RUN apt-get -o Acquire::Check-Valid-Until=false update
-
-RUN apt-get -y install git libtool \
-    cmake clang-format-7 automake ninja-build curl \
-    git build-essential wget libudev-dev libssl-dev openssl pkg-config autoconf autogen libtool \
-    libssl-dev pkg-config zip g++ zlib1g-dev unzip python curl gnupg2
-
-RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/0.19.2/bazel-0.19.2-installer-linux-x86_64.sh
-RUN chmod +x bazel-0.19.2-installer-linux-x86_64.sh
-RUN ./bazel-0.19.2-installer-linux-x86_64.sh --user
-
-# build QAT library
-
-RUN sed -i -e 's/cmn_ko$//' quickassist/Makefile
-
-ENV ICP_ROOT /
-ENV ICP_BUILD_OUTPUT /build
-ENV ICP_ENV_DIR /quickassist/build_system/build_files/env_files
-ENV ICP_BUILDSYSTEM_PATH /quickassist/build_system
-ENV KERNEL_SOURCE_ROOT /tmp
-
-RUN  ./configure --disable-qat-lkcf
-
-RUN make -f quickassist/Makefile user
-RUN make adf-ctl-all
-
-RUN install -m 755 build/libqat_s.so /usr/lib/ && \
-    install -m 755 build/libusdm_drv_s.so /usr/lib/ && \
-    install -m 755 build/adf_ctl /usr/bin/ && \
-    echo /usr/lib/ > /etc/ld.so.conf.d/qat.conf && ldconfig
-
-# configure OpenSSL
-
-RUN cd /openssl && ./config && \
-    install -d /usr/local/lib/site_perl && install -m 644 configdata.pm /usr/local/lib/site_perl/
-
-# build QAT Engine
-
-RUN cd /QAT_Engine && ./autogen.sh && \
-    mkdir -p /usr/lib/engines-1.1 && ./configure --with-qat_dir=../ --with-openssl_dir=../openssl \
-    --with-openssl_install_dir=/usr --enable-upstream_driver --enable-usdm --with-qat_install_dir=/usr/lib && \
-    make && make install && \
-    mv /usr/lib/engines-1.1/qat.so /usr/lib/x86_64-linux-gnu/engines-1.1/ && ldconfig
-
-RUN install -d /usr/local/lib64 && cd /usr/local/lib64 && ln -s /usr/lib/x86_64-linux-gnu/libssl.so && ln -s /usr/lib/x86_64-linux-gnu/libcrypto.so
-
-# build Envoy
-RUN cd /envoy && /root/.bazel/bin/bazel build -c opt //source/exe:envoy-static
+RUN bash -f scripts/build_qat_envoy.sh
 
 # Start creating the target image
 FROM debian:sid-slim
