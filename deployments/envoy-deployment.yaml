@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: helloenvoy
+  labels:
+    app: openssl-envoy
+spec:
+  type: NodePort
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+      name: https
+  selector:
+    app: openssl-envoy
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openssl-envoy-config
+data:
+  envoy-conf.yaml: |
+    static_resources:
+      listeners:
+      - address:
+          socket_address:
+            address: 0.0.0.0
+            port_value: 9000
+        filter_chains:
+          tls_context:
+            common_tls_context:
+              tls_certificates:
+                certificate_chain: { "filename": "/etc/envoy/tls/tls.crt" }
+                private_key: { "filename": "/etc/envoy/tls/tls.key" }
+          filters:
+          - name: envoy.http_connection_manager
+            config:
+              codec_type: auto
+              stat_prefix: ingress_http
+              route_config:
+                name: local_route
+                require_ssl: all
+                virtual_hosts:
+                - name: backend
+                  domains:
+                  - "*"
+                  routes:
+                  - match: { prefix: "/" }
+                    direct_response: { status: 200 }
+              http_filters:
+              - name: envoy.router
+                config: {}
+    admin:
+      access_log_path: "/dev/null"
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 9001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openssl-envoy
+  labels:
+    app: openssl-envoy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openssl-envoy
+  template:
+    metadata:
+      labels:
+        app: openssl-envoy
+    spec:
+      containers:
+        - name: envoy
+          image: envoy-qat:devel
+          securityContext:
+            privileged: true
+          imagePullPolicy: IfNotPresent
+          command:
+            - "/envoy-static"
+          args:
+            - "-c"
+            - "/etc/envoy/config/envoy-conf.yaml"
+            - "--concurrency"
+            - "6"
+          env:
+            - name: loglevel
+              value: debug
+          resources:
+            limits:
+              qat.intel.com/cy1_dc0: 1
+              cpu: 2
+              memory: "2G"
+            requests:
+              cpu: 2
+              memory: "2G"
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - name: tls
+              mountPath: /etc/envoy/tls
+              readOnly: true
+            - name: config
+              mountPath: /etc/envoy/config
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: envoy-tls-secret
+        - name: config
+          configMap:
+            name: openssl-envoy-config
