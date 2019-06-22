@@ -15,10 +15,7 @@ set -o xtrace
 source _commons.sh
 
 install_dashboard
-if ! kubectl get secret --no-headers | grep -e envoy-tls-secret; then
-    openssl req -x509 -new -batch -nodes -subj '/CN=localhost' -keyout /tmp/key.pem -out /tmp/cert.pem
-    kubectl create secret tls envoy-tls-secret --cert /tmp/cert.pem --key /tmp/key.pem
-fi
+install_tls_secrets
 kubectl apply -f k8s_resources/"${CONTAINER_MANAGER:-docker}/"
 qat_svc=$(sudo /etc/init.d/qat_service status | grep "There is .* QAT acceleration device(s) in the system:")
 if [[ "$qat_svc" != *"0"* ]]; then

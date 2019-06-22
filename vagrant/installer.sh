@@ -18,35 +18,11 @@ source _commons.sh
 ./prechecks.sh
 
 # Configure SSH keys for ansible communication
-rm -f ~/.ssh/id_rsa*
-echo -e "\n\n\n" | ssh-keygen -t rsa -N ""
-cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-chmod og-wx ~/.ssh/authorized_keys
+configure_ansible_ssh_keys
 generates_inventory_file
 
 # Install dependencies
-swap_dev=$(sed -n -e 's#^/dev/\([0-9a-z]*\).*#dev-\1.swap#p' /proc/swaps)
-if [ -n "$swap_dev" ]; then
-    sudo systemctl mask "$swap_dev"
-fi
-sudo swapoff -a
-if [ -e /etc/fstab ]; then
-    sudo sed -i '/ swap / s/^/#/' /etc/fstab
-fi
-# shellcheck disable=SC1091
-source /etc/os-release || source /usr/lib/os-release
-case ${ID,,} in
-    rhel|centos|fedora)
-        curl -sL https://bootstrap.pypa.io/get-pip.py | sudo python
-    ;;
-    clear-linux-os)
-        sudo swupd bundle-add python3-basic
-    ;;
-esac
-sudo mkdir -p /etc/ansible/
-sudo cp ./ansible.cfg /etc/ansible/ansible.cfg
-sudo -E pip install ansible==2.7.10
-ansible-galaxy install -r ./galaxy-requirements.yml --ignore-errors
+install_deps
 
 # QAT Driver installation
 ansible-playbook -vvv -i ./inventory/hosts.ini configure-qat.yml | tee setup-qat.log
