@@ -19,5 +19,5 @@ libraries:
 
   qat:
     url: "https://01.org/sites/default/files/downloads"
-    version: "1.7.l.4.5.0-00034"
-    sha256: "c42a3afc1a5c76d441eaca8b97dc1f9ee64939ec001539ee1a2f3b39b7543c8e"
+    version: "1.7.l.4.6.0-00025"
+    sha256: "8381567a11766ab89e556a41aad9a71031209f68b27ae0c49ff59757661162f4"

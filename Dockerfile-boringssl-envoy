@@ -5,14 +5,14 @@ RUN apt-get update
 RUN apt-get -y install git libtool \
     cmake clang-format-7 automake ninja-build curl \
     git build-essential wget libudev-dev libssl-dev openssl pkg-config autoconf autogen libtool \
-    openssl libssl-dev pkg-config zip g++ zlib1g-dev unzip python curl gnupg2 \
+    openssl libssl-dev pkg-config zip g++ zlib1g-dev unzip python curl \
     python3 gperf libcap-dev
 
-RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/0.24.1/bazel-0.24.1-installer-linux-x86_64.sh
-RUN chmod +x bazel-0.24.1-installer-linux-x86_64.sh
-RUN ./bazel-0.24.1-installer-linux-x86_64.sh --user
+RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/0.28.0/bazel-0.28.0-installer-linux-x86_64.sh
+RUN chmod +x bazel-0.28.0-installer-linux-x86_64.sh
+RUN ./bazel-0.28.0-installer-linux-x86_64.sh --user
 
-RUN git clone --recurse-submodules --single-branch --branch qat-provider https://github.com/ipuustin/envoy.git envoy
+RUN git clone --recurse-submodules --single-branch --branch qat-provider-master https://github.com/ipuustin/envoy.git envoy
 
 # build Envoy
 RUN cd envoy && /root/.bazel/bin/bazel build --verbose_failures -c opt -s //source/exe:envoy-static
