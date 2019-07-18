@@ -102,7 +102,7 @@ build_install_qat_library() {
 
 	case $ID in
 		clear-linux*)
-			./configure --enable-qat-uio
+			./configure
 			;;
 		debian|ubuntu)
 			./configure --disable-qat-lkcf
