@@ -1,7 +1,5 @@
 FROM clearlinux:base as builder
 
-ADD openssl openssl
-ADD QAT_Engine QAT_Engine
 ADD envoy envoy
 ADD scripts scripts
 ADD versions.yaml versions.yaml
