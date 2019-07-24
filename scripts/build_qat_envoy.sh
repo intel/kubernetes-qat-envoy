@@ -16,8 +16,8 @@ fi
 readonly BAZEL_BIN="$(realpath "${PWD}"/bazel.sh)"
 readonly SCRIPTS_DIR="$(realpath "$(dirname "$0")")"
 readonly VERSIONS_FILE="${SCRIPTS_DIR}/../versions.yaml"
-readonly OPENSSL_DIR="${SCRIPTS_DIR}/../openssl"
 readonly QAT_ENGINE_DIR="${SCRIPTS_DIR}/../QAT_Engine"
+readonly OPENSSL_DIR="/usr"
 readonly ENVOY_DIR="${SCRIPTS_DIR}/../envoy"
 readonly QAT_LIB_DIR="${SCRIPTS_DIR}/../QAT_Lib"
 
@@ -30,8 +30,11 @@ versions_yaml() {
 
 install_bazel() {
 	info "Download and install bazel"
+
 	local bazel_url
 	local bazel_version
+	local bazel_sha256
+
 	bazel_url="$(versions_yaml "tools.bazel.url")"
 	bazel_version="$(versions_yaml "tools.bazel.version")"
 	bazel_sha256="$(versions_yaml "tools.bazel.sha256")"
@@ -76,8 +79,12 @@ setup() {
 }
 
 build_install_qat_library() {
+	info "Download and install QAT library"
+
 	local qat_url
 	local qat_version
+	local qat_sha256
+	local qat_tar
 
 	qat_url="$(versions_yaml "libraries.qat.url")"
 	qat_version="$(versions_yaml "libraries.qat.version")"
@@ -122,24 +129,29 @@ build_install_qat_library() {
 	popd
 }
 
-configure_install_openssl() {
-	pushd "${OPENSSL_DIR}"
-
-	./config
-
-	case $ID in
-		debian|ubuntu)
-			install -d /usr/local/lib/site_perl
-			install -m 644 configdata.pm /usr/local/lib/site_perl/
-			;;
-	esac
-
-	popd
-}
-
 build_install_qat_engine() {
-	pushd "${QAT_ENGINE_DIR}"
+	info "Download and install QAT OpenSSL Engine"
+
 	local distro_specific_opts=""
+	local qat_engine_url
+	local qat_engine_version
+	local qat_engine_sha256
+	local qat_engine_tar
+
+	qat_engine_url="$(versions_yaml "libraries.qat_engine.url")"
+	qat_engine_version="$(versions_yaml "libraries.qat_engine.version")"
+	qat_engine_sha256="$(versions_yaml "libraries.qat_engine.sha256")"
+
+	qat_engine_tar="qat_engine.tgz"
+	curl -L "${qat_engine_url}"/v"${qat_engine_version}".tar.gz -o "${qat_engine_tar}"
+	qat_engine_sha256_sum="$(sha256sum "${qat_engine_tar}" | cut -d' ' -f1)"
+	# check sha256
+	if [ "${qat_engine_sha256_sum}" != "${qat_engine_sha256}" ]; then
+		die "Mismatch for QAT Engine sha256. Expecting ${qat_engine_sha256}, got ${qat_engine_sha256_sum}"
+	fi
+	tar -xf "${qat_engine_tar}"
+	ln -s "QAT_Engine-${qat_engine_version}" QAT_Engine
+	pushd "QAT_Engine-${qat_engine_version}"
 
 	case $ID in
 		clear-linux*)
@@ -156,6 +168,7 @@ build_install_qat_engine() {
 	./configure --with-qat_dir="${QAT_LIB_DIR}" \
 				--with-openssl_dir="${OPENSSL_DIR}" \
 				--enable-upstream_driver \
+				--enable-qat_skip_err_files_build \
 				--enable-usdm --with-qat_install_dir=/usr/lib \
 				${distro_specific_opts}
 	make -j "$(jobs)"
@@ -194,9 +207,6 @@ main() {
 
 	info "Build and install QAT library"
 	build_install_qat_library
-
-	info "Configure and install openssl"
-	configure_install_openssl
 
 	info "Build and install QAT engine"
 	build_install_qat_engine
