@@ -47,13 +47,6 @@ pipeline {
                 }
               }
             }
-            stage ('K6 custom') {
-              steps {
-                retry(count: 3) {
-                  sh 'make -f ./e2e/Makefile k6-loadimpact'
-                }
-              }
-            }
           }
         }
       }

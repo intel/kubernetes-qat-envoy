@@ -19,7 +19,7 @@ if [ "$STATUS" == "Running" ]; then
     ./e2e/qat/print-counters.sh | tee ./before.txt;
     # Using a cipher suite that is available/supported for all envoy images;
     CIPHER_SUITE="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256" ./e2e/docker/configure-k6.sh
-    docker run --net=host -i loadimpact/k6:custom run --vus 30 --duration 20s -< ./tests/k6-testing-config-docker.js
+    docker run --net=host -i loadimpact/k6:master run --vus 30 --duration 20s -< ./tests/k6-testing-config-docker.js
     ./e2e/qat/print-counters.sh | tee ./after.txt;
     DIFF=$(diff ./before.txt ./after.txt);
     echo ${DIFF}

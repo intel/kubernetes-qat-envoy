@@ -1,11 +1,6 @@
 #!/bin/bash
 # Script to check if deployment is incrementing QAT fw_counters under stress test.
 source ./e2e/vars.sh
-# Skipping cipher suite, since boringSSL no loger support it:
-# Reference: https://boringssl.googlesource.com/boringssl/+/6e678eeb
-if [[ $TAG = *boringssl* ]]; then
-  CIPHERS=( "${CIPHERS[@]/TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256/}" );
-fi
 
 # Building test results path.
 if [ "$RUN" == "k8s" ]; then
@@ -49,10 +44,10 @@ for CPU in ${CPUS[@]}; do
         # js config file and run the container in the k6 runner.
         if [ -n "$CLIENT" ]; then
           scp -i ./key.pem -oStrictHostKeyChecking=no ./tests/k6-testing-config-docker.js ${CLIENT}:/tmp/
-          ssh -i ./key.pem -oStrictHostKeyChecking=no ${CLIENT} "docker run --net=host -i loadimpact/k6:custom run --out influxdb=http://k8s-ci-analytics.zpn.intel.com:8086/$DEVICE_TYPE --vus 30 --duration 20s -< /tmp/k6-testing-config-docker.js" | tee ${CDIR}/ciphers/${CIPHER}/results.txt;
+          ssh -i ./key.pem -oStrictHostKeyChecking=no ${CLIENT} "docker run --net=host -i loadimpact/k6:master run --out influxdb=http://k8s-ci-analytics.zpn.intel.com:8086/$DEVICE_TYPE --vus 30 --duration 20s -< /tmp/k6-testing-config-docker.js" | tee ${CDIR}/ciphers/${CIPHER}/results.txt;
           ssh -i ./key.pem -oStrictHostKeyChecking=no ${CLIENT} "rm -rf /tmp/k6-testing-config-docker.js"
         else
-          docker run --net=host -i loadimpact/k6:custom run --out influxdb=http://k8s-ci-analytics.zpn.intel.com:8086/${DEVICE_TYPE} --vus 30 --duration 20s -< ./tests/k6-testing-config-docker.js | tee ${CDIR}/ciphers/${CIPHER}/results.txt;
+          docker run --net=host -i loadimpact/k6:master run --out influxdb=http://k8s-ci-analytics.zpn.intel.com:8086/${DEVICE_TYPE} --vus 30 --duration 20s -< ./tests/k6-testing-config-docker.js | tee ${CDIR}/ciphers/${CIPHER}/results.txt;
         fi
       fi
       # TODO: confirm if tail latency is calculated correctly.
