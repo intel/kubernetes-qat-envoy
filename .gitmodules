@@ -6,7 +6,3 @@
 	path = intel-device-plugins-for-kubernetes
 	url = https://github.com/intel/intel-device-plugins-for-kubernetes.git
 	branch = master
-[submodule "k6"]
-	path = k6
-	url = https://github.com/ipuustin/k6.git
-	branch = TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256

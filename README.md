@@ -63,7 +63,7 @@ Get the NodePort:
 
 The NodePort in this case would be `32675`.
 
-## Test and benchmark the setup with and without QAT acceleration
+## Test and benchmark the setup with and without QAT acceleration using K6
 
 Access the proxy using curl and the certificate (change the correct NodePort value to the URL):
 
@@ -71,15 +71,9 @@ Access the proxy using curl and the certificate (change the correct NodePort val
 
 You should expect to see the Nginx*-provided web page source.
 
-In order to run benchmarks with k6 load testing tool, first create a container for a version which has `TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256` support enabled:
-
-    $ cd k6
-    # docker image build -t loadimpact/k6:custom -f Dockerfile .
-    $ cd ..
-
 Edit the `tests/k6-testing-config-docker.js` file to set the test parameters.  You can among other things select the cipher suite in the file. At least replace the port `9000` in the URL with the NodePort value.  Then run the benchmark:
 
-    # docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 20s -< tests/k6-testing-config-docker.js
+    # docker run --net=host -i loadimpact/k6:master run --vus 10 --duration 20s -< tests/k6-testing-config-docker.js
 
 To run benchmarks against non-accelerated setup apply this deployment config and run the benchmark again (after waiting for a few moments for the Pod to restart):
 
