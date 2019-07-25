@@ -50,7 +50,7 @@ spec:
         spec:
           containers:
           - name: k6-test
-            image: loadimpact/k6:custom
+            image: loadimpact/k6:master
             command: [ "k6", "run", "--out", "influxdb=http://metrics-db-no-qat-influxdb.default.svc.cluster.local:8086", "/opt/script.js" ]
             volumeMounts:
             - name: k6-volume
