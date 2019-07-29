@@ -18,7 +18,7 @@ readonly SCRIPTS_DIR="$(realpath "$(dirname "$0")")"
 readonly VERSIONS_FILE="${SCRIPTS_DIR}/../versions.yaml"
 readonly QAT_ENGINE_DIR="${SCRIPTS_DIR}/../QAT_Engine"
 readonly OPENSSL_DIR="/usr"
-readonly ENVOY_DIR="${SCRIPTS_DIR}/../envoy"
+readonly ENVOY_DIR="${SCRIPTS_DIR}/../envoy-openssl"
 readonly QAT_LIB_DIR="${SCRIPTS_DIR}/../QAT_Lib"
 
 #shellcheck source=lib.sh
@@ -68,7 +68,7 @@ setup() {
 					git build-essential wget libudev-dev libssl-dev \
 					openssl pkg-config autoconf autogen libtool \
 					libssl-dev pkg-config zip g++ zlib1g-dev unzip \
-					python python-pip curl gnupg2
+					python python-pip curl gnupg2 python3
 			;;
 	esac
 
@@ -179,6 +179,7 @@ build_install_qat_engine() {
 		clear-linux*)
 			ln -sf /usr/lib64/libssl.so /usr/local/lib64/
 			ln -sf /usr/lib64/libcrypto.so /usr/local/lib64/
+			ln -sf /usr/lib64 /usr/lib/x86_64-linux-gnu
 			;;
 
 		debian|ubuntu)
@@ -194,7 +195,15 @@ build_install_qat_engine() {
 
 build_envoy() {
 	pushd "${ENVOY_DIR}"
-	~/.bazel/bin/bazel build -j "$(jobs)" -c opt //source/exe:envoy-static
+	case $ID in
+		clear-linux*)
+		    CXXFLAGS="-Wno-error=stringop-truncation -Wno-error=redundant-move -DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "$(jobs)" -c opt //:envoy --define boringssl=disabled
+		    ;;
+
+		debian|ubuntu)
+		    CXXFLAGS="-DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "$(jobs)" -c opt //:envoy --define boringssl=disabled
+		    ;;
+	esac
 	popd
 }
 

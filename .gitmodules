@@ -1,8 +1,11 @@
 [submodule "envoy"]
 	path = envoy
-	url = https://github.com/ipuustin/envoy.git
-	branch = openssl-container
+	url = https://github.com/envoyproxy/envoy.git
+	branch = master
 [submodule "intel-device-plugins-for-kubernetes"]
 	path = intel-device-plugins-for-kubernetes
 	url = https://github.com/intel/intel-device-plugins-for-kubernetes.git
 	branch = master
+[submodule "envoy-openssl"]
+	path = envoy-openssl
+	url = https://github.com/envoyproxy/envoy-openssl.git
