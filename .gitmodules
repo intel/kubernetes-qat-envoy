@@ -8,4 +8,5 @@
 	branch = master
 [submodule "envoy-openssl"]
 	path = envoy-openssl
-	url = https://github.com/envoyproxy/envoy-openssl.git
+	url = https://github.com/rojkov/envoy-openssl.git
+	branch = async-mode
