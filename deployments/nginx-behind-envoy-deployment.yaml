@@ -114,8 +114,6 @@ spec:
             - "--concurrency"
             - "6"
           env:
-            - name: loglevel
-              value: debug
             - name: OPENSSL_CONF
               value: /etc/envoy/config/openssl.cnf
           resources:
