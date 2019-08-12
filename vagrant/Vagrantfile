@@ -11,11 +11,11 @@
 box = {
   :virtualbox => {
     :centos => { :name => 'generic/centos7', :version=> '1.9.2' },
-    :clearlinux => { :name => 'AntonioMeireles/ClearLinux', :version=> '28510' }
+    :clearlinux => { :name => 'AntonioMeireles/ClearLinux', :version=> '30800' }
   },
   :libvirt => {
     :centos => { :name => 'centos/7', :version=> '1901.01' },
-    :clearlinux => { :name => 'AntonioMeireles/ClearLinux', :version=> '28510' }
+    :clearlinux => { :name => 'AntonioMeireles/ClearLinux', :version=> '30800' }
   }
 }
 
@@ -37,6 +37,24 @@ puts "[INFO] Shared folder: #{vagrant_root}"
 puts "[INFO] Linux Distro: #{distro}"
 puts "[INFO] Container manager: #{container_manager}"
 
+File.exists?("/usr/share/qemu/OVMF.fd") ? loader = "/usr/share/qemu/OVMF.fd" : loader = File.join(File.dirname(__FILE__), "OVMF.fd")
+if not File.exists?(loader)
+  require 'net/http'
+  http_proxy = ENV['http_proxy'] || ENV['HTTP_PROXY'] || ""
+  http_domain = nil
+  http_port = nil
+  unless http_proxy.to_s.strip.empty?
+    http_domain = http_proxy.split(":")[1].delete('//')
+    http_port = http_proxy.split(":")[2]
+  end
+  Net::HTTP.start("download.clearlinux.org", nil, http_domain, http_port) do |http|
+    resp = http.get("/image/OVMF.fd")
+    open("OVMF.fd", "wb") do |file|
+      file.write(resp.body)
+    end
+  end
+end
+
 Vagrant.configure("2") do |config|
   config.vm.provider :libvirt
   config.vm.provider :virtualbox
@@ -44,7 +62,7 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder '.', '/vagrant', disabled: true
   config.vm.synced_folder '../', "#{vagrant_root}", create: true,
     rsync__args: ["--verbose", "--archive", "--delete", "-z"]
-    config.vm.provision "shell", inline: <<-SHELL
+  config.vm.provision "shell", inline: <<-SHELL
       source /etc/os-release || source /usr/lib/os-release
       case ${ID,,} in
           clear-linux-os)
@@ -57,7 +75,7 @@ Vagrant.configure("2") do |config|
           ;;
       esac
     SHELL
-    config.vm.provision :reload
+  config.vm.provision :reload
   config.vm.provision 'shell', privileged: false do |sh|
     sh.env = {
       'CONTAINER_MANAGER': "#{container_manager}"
@@ -90,6 +108,7 @@ Vagrant.configure("2") do |config|
     v.management_network_address = "192.168.123.0/27"
     v.management_network_name = "qat-mgmt-net"
     v.random_hostname = true
+    v.loader = loader
     # Intel Corporation QuickAssist Technology
     qat_devices = `for i in 0434 0435 37c8 6f54 19e2; do lspci -d 8086:$i -m; done|awk '{print $1}'`
     qat_devices.split("\n").each do |dev|
