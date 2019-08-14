@@ -26,4 +26,4 @@ RUN ln -s /usr/lib/libqat.so /usr/lib/libqat.so.0 && \
 
 STOPSIGNAL SIGTERM
 
-ENTRYPOINT ["/envoy-static", "-c", "/etc/envoy/config/envoy-conf.yaml", "--concurrency", "6"]
+ENTRYPOINT ["/envoy-static", "-c", "/etc/envoy/config/envoy-conf.yaml", "--cpuset-threads"]

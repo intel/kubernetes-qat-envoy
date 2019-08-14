@@ -26,6 +26,33 @@ Check that the correct archive has been loaded by calculating its sha256 checksu
 
 Add the image to the Docker registry where all nodes in your cluster can find it. If you load the image to the Docker image cache on all nodes, you can skip this step. The exact commands depend on the Docker infrastructure you have.
 
+## Set up the node's kubelet to use the static CPU Management Policy
+
+Make sure that kubelet's configuration file (set with `--config` command line option) contains the following settings:
+
+```yaml
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cpuManagerPolicy: static
+systemReserved:
+  cpu: 500m
+  memory: 256M
+kubeReserved:
+  cpu: 500m
+memory: 256M
+...
+```
+
+If the original policy was `none` then remove CPU manager's snapshot file and restart kubelet:
+
+    # rm /var/lib/kubelet/cpu_manager_state
+    # systemctl restart kubelet
+
+Check kubelet is running with its CPU manager using the static policy
+
+    $ systemctl status kubelet
+    $ cat /var/lib/kubelet/cpu_manager_state
+
 ## Prepare TLS keys and wrap them into a Kubernetes secret
 
 Create SSL certificate and private key (note that your process for creating and signing the certificate may be different):
