@@ -25,3 +25,6 @@ env:
     value: "grafana"
   - name: INFLUXDB_READ_USER_PASSWORD
     value: "secret"
+
+persistence:
+  enabled: false
