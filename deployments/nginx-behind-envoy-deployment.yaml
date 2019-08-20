@@ -67,6 +67,15 @@ data:
         socket_address:
           address: 0.0.0.0
           port_value: 9001
+  openssl.cnf: |
+    openssl_conf = openssl_init
+    [ openssl_init ]
+    engines = engine_section
+    [ engine_section ]
+    qat = qat_section
+    [ qat_section ]
+    engine_id = qat
+    default_algorithms = ALL
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -102,11 +111,10 @@ spec:
           args:
             - "-c"
             - "/etc/envoy/config/envoy-conf.yaml"
-            - "--concurrency"
-            - "6"
+            - "--cpuset-threads"
           env:
-            - name: loglevel
-              value: debug
+            - name: OPENSSL_CONF
+              value: /etc/envoy/config/openssl.cnf
           resources:
             limits:
               qat.intel.com/cy1_dc0: 1

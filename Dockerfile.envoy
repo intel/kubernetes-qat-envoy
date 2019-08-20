@@ -23,20 +23,8 @@ COPY --from=builder /envoy/bazel-bin/source/exe/envoy-static /envoy-static
 
 RUN ln -s /usr/lib/libqat.so /usr/lib/libqat.so.0 && \
     ln -s /usr/lib/libqat.so /usr/lib/libqat.so.0.0.0 && \
-    echo /usr/lib/ > /etc/ld.so.conf.d/qat.conf && ldconfig && \
-    sed -i -e 's:openssl_conf = default_conf:openssl_conf = openssl_init:g' /etc/ssl/openssl.cnf && \
-    echo "" >> /etc/ssl/openssl.cnf && \
-    echo "[ openssl_init ]" >> /etc/ssl/openssl.cnf && \
-    echo "engines = engine_section" >> /etc/ssl/openssl.cnf && \
-    echo "" >> /etc/ssl/openssl.cnf && \
-    echo "[ engine_section ]" >> /etc/ssl/openssl.cnf && \
-    echo "qat = qat_section"  >> /etc/ssl/openssl.cnf && \
-    echo "" >> /etc/ssl/openssl.cnf && \
-    echo "[ qat_section ]" >> /etc/ssl/openssl.cnf && \
-    echo "engine_id = qat" >> /etc/ssl/openssl.cnf && \
-    echo "default_algorithms = ALL" >> /etc/ssl/openssl.cnf && \
-    echo "" >> /etc/ssl/openssl.cnf
+    echo /usr/lib/ > /etc/ld.so.conf.d/qat.conf && ldconfig
 
 STOPSIGNAL SIGTERM
 
-ENTRYPOINT ["/envoy-static", "-c /etc/envoy/config/envoy-conf.yaml"]
+ENTRYPOINT ["/envoy-static", "-c", "/etc/envoy/config/envoy-conf.yaml", "--cpuset-threads"]
