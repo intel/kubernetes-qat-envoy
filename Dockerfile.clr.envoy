@@ -1,6 +1,9 @@
 FROM clearlinux:base as builder
 
-ADD envoy envoy
+ADD envoy-openssl envoy-openssl
+ADD envoy-openssl.WORKSPACE envoy-openssl/WORKSPACE
+RUN rm -rf envoy-openssl/envoy
+ADD envoy envoy-openssl/envoy
 ADD scripts scripts
 ADD versions.yaml versions.yaml
 
@@ -15,7 +18,7 @@ COPY --from=builder /usr/lib/libusdm_drv_s.so /usr/lib
 COPY --from=builder /usr/lib64/lib/libqat.so /usr/lib
 COPY --from=builder /usr/bin/adf_ctl /usr/bin
 COPY --from=builder /usr/lib64/engines-1.1/qat.so /usr/lib64/engines-1.1
-COPY --from=builder /envoy/bazel-bin/source/exe/envoy-static /
+COPY --from=builder /envoy-openssl/bazel-bin/envoy /envoy-static
 
 RUN ln -s /usr/lib/libqat.so /usr/lib/libqat.so.0 && \
     ln -s /usr/lib/libqat.so /usr/lib/libqat.so.0.0.0 && \
