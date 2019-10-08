@@ -201,7 +201,7 @@ build_envoy() {
 		    ;;
 
 		debian|ubuntu)
-		    CXXFLAGS="-DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "$(jobs)" -c opt //:envoy --define boringssl=disabled
+		    CXXFLAGS="-Wno-error=stringop-truncation -Wno-error=redundant-move -DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "$(jobs)" -c opt //:envoy --define boringssl=disabled
 		    ;;
 	esac
 	popd
