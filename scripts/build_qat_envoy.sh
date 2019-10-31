@@ -197,11 +197,11 @@ build_envoy() {
 	pushd "${ENVOY_DIR}"
 	case $ID in
 		clear-linux*)
-		    CXXFLAGS="-Wno-error=stringop-truncation -Wno-error=redundant-move -DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "$(jobs)" -c opt //:envoy --define boringssl=disabled
+		    CXXFLAGS="-Wno-error=stringop-truncation -Wno-error=redundant-move -DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "HOST_CPUS*.5" -c opt //:envoy --define boringssl=disabled
 		    ;;
 
 		debian|ubuntu)
-		    CXXFLAGS="-Wno-error=stringop-truncation -Wno-error=redundant-move -DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "$(jobs)" -c opt //:envoy --define boringssl=disabled
+		    CXXFLAGS="-Wno-error=stringop-truncation -Wno-error=redundant-move -DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "HOST_CPUS*.5" -c opt //:envoy --define boringssl=disabled
 		    ;;
 	esac
 	popd
