@@ -56,7 +56,7 @@ setup() {
 			rm -rf /run/lock/clrtrust.lock
 			clrtrust generate
 			swupd update
-			swupd bundle-add os-core-dev
+			swupd bundle-add os-core-dev python2-basic
 			;;
 		debian|ubuntu)
 			info "Debian/Ubuntu OS detected"
@@ -196,12 +196,8 @@ build_install_qat_engine() {
 build_envoy() {
 	pushd "${ENVOY_DIR}"
 	case $ID in
-		clear-linux*)
-		    CXXFLAGS="-Wno-error=stringop-truncation -Wno-error=redundant-move -DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "$(jobs)" -c opt //:envoy --define boringssl=disabled
-		    ;;
-
-		debian|ubuntu)
-		    CXXFLAGS="-Wno-error=stringop-truncation -Wno-error=redundant-move -DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "$(jobs)" -c opt //:envoy --define boringssl=disabled
+		clear-linux*|debian|ubuntu)
+		    CXXFLAGS="-DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "$(jobs)" -c opt //:envoy --define boringssl=disabled
 		    ;;
 	esac
 	popd

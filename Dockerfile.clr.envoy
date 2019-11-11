@@ -1,11 +1,9 @@
 FROM clearlinux:base as builder
 
-ADD envoy-openssl envoy-openssl
-ADD envoy-openssl.WORKSPACE envoy-openssl/WORKSPACE
-RUN rm -rf envoy-openssl/envoy
-ADD envoy envoy-openssl/envoy
-ADD scripts scripts
-ADD versions.yaml versions.yaml
+COPY . .
+RUN mv envoy-openssl.WORKSPACE envoy-openssl/WORKSPACE && \
+    rm -rf envoy-openssl/envoy && \
+    mv envoy envoy-openssl/envoy
 
 RUN bash -f scripts/build_qat_envoy.sh
 
