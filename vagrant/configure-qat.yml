@@ -67,7 +67,7 @@
       shell: rmmod intel_qat
       ignore_errors: True
     - name: configure qat driver source code
-      command: ./configure --enable-qat-uio --enable-kapi
+      command: ./configure --enable-kapi
       args:
         chdir: "{{ qat_driver.dest }}"
     - name: build qat driver

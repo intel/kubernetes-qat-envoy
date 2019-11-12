@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is a technical guide for getting Intel Quick Assist Technology (QAT) accelerated Envoy* running on a bare-metal Kubernetes* cluster. You may need to adapt some commands to your particular cluster setup. You need to first install the QAT driver on every node which has QAT hardware installed. The driver used in this setup is located at https://01.org/sites/default/files/downloads/qat1.7.l.4.5.0-00034.tar.gz, and the package contains a README file which explains the installation.
+This is a technical guide for getting Intel Quick Assist Technology (QAT) accelerated Envoy* running on a bare-metal Kubernetes* cluster. You may need to adapt some commands to your particular cluster setup. You need to first install the QAT driver on every node which has QAT hardware installed. The driver used in this setup is located at https://01.org/sites/default/files/downloads/qat1.7.l.4.6.0-00025.tar.gz, and the package contains a README file which explains the installation.
 
 ## Clone this repository (with submodules) and fetch the QAT driver
 
@@ -13,18 +13,45 @@ Clone this repository with submodules:
 Then go to the created directory and fetch the QAT driver:
 
     $ cd kubernetes-qat-envoy
-    $ wget https://01.org/sites/default/files/downloads/qat1.7.l.4.5.0-00034.tar.gz
+    $ wget https://01.org/sites/default/files/downloads/qat1.7.l.4.6.0-00025.tar.gz
 
 Check that the correct archive has been loaded by calculating its sha256 checksum:
 
-    $ sha256sum qat1.7.l.4.5.0-00034.tar.gz
-    c42a3afc1a5c76d441eaca8b97dc1f9ee64939ec001539ee1a2f3b39b7543c8e  qat1.7.l.4.5.0-00034.tar.gz
+    $ sha256sum qat1.7.l.4.6.0-00025.tar.gz
+    8381567a11766ab89e556a41aad9a71031209f68b27ae0c49ff59757661162f4  qat1.7.l.4.6.0-00025.tar.gz
 
 ## Create a container for QAT-accelerated Envoy
 
     # docker image build -t envoy-qat:devel -f Dockerfile.envoy .
 
 Add the image to the Docker registry where all nodes in your cluster can find it. If you load the image to the Docker image cache on all nodes, you can skip this step. The exact commands depend on the Docker infrastructure you have.
+
+## Set up the node's kubelet to use the static CPU Management Policy
+
+Make sure that kubelet's configuration file (set with `--config` command line option) contains the following settings:
+
+```yaml
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cpuManagerPolicy: static
+systemReserved:
+  cpu: 500m
+  memory: 256M
+kubeReserved:
+  cpu: 500m
+memory: 256M
+...
+```
+
+If the original policy was `none` then remove CPU manager's snapshot file and restart kubelet:
+
+    # rm /var/lib/kubelet/cpu_manager_state
+    # systemctl restart kubelet
+
+Check kubelet is running with its CPU manager using the static policy
+
+    $ systemctl status kubelet
+    $ cat /var/lib/kubelet/cpu_manager_state
 
 ## Prepare TLS keys and wrap them into a Kubernetes secret
 
@@ -63,7 +90,7 @@ Get the NodePort:
 
 The NodePort in this case would be `32675`.
 
-## Test and benchmark the setup with and without QAT acceleration
+## Test and benchmark the setup with and without QAT acceleration using K6
 
 Access the proxy using curl and the certificate (change the correct NodePort value to the URL):
 
@@ -71,15 +98,9 @@ Access the proxy using curl and the certificate (change the correct NodePort val
 
 You should expect to see the Nginx*-provided web page source.
 
-In order to run benchmarks with k6 load testing tool, first create a container for a version which has `TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256` support enabled:
-
-    $ cd k6
-    # docker image build -t loadimpact/k6:custom -f Dockerfile .
-    $ cd ..
-
 Edit the `tests/k6-testing-config-docker.js` file to set the test parameters.  You can among other things select the cipher suite in the file. At least replace the port `9000` in the URL with the NodePort value.  Then run the benchmark:
 
-    # docker run --net=host -i loadimpact/k6:custom run --vus 10 --duration 20s -< tests/k6-testing-config-docker.js
+    # docker run --net=host -i loadimpact/k6:master run --vus 10 --duration 20s -< tests/k6-testing-config-docker.js
 
 To run benchmarks against non-accelerated setup apply this deployment config and run the benchmark again (after waiting for a few moments for the Pod to restart):
 

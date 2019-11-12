@@ -94,7 +94,7 @@ function install_k8s {
                     sudo yum install -y wget
                 ;;
             esac
-            wget -O $kubespray_folder/roles/container-engine/cri-o/templates/crio.conf.j2 https://raw.githubusercontent.com/kubernetes-sigs/kubespray/master/roles/container-engine/cri-o/templates/crio.conf.j2
+            wget -O $kubespray_folder/roles/container-engine/cri-o/templates/crio.conf.j2 https://raw.githubusercontent.com/kubernetes-sigs/kubespray/2db289811261d90cdb335307a3ff43785fdca45a/roles/container-engine/cri-o/templates/crio.conf.j2
             echo "CRI-O configuration"
             {
             echo "download_container: false"

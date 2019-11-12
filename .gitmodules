@@ -1,20 +1,12 @@
 [submodule "envoy"]
 	path = envoy
-	url = https://github.com/ipuustin/envoy.git
-	branch = openssl-container
-[submodule "QAT_Engine"]
-	path = QAT_Engine
-	url = https://github.com/ipuustin/QAT_Engine.git
-	branch = section_name_env
+	url = https://github.com/envoyproxy/envoy.git
+	branch = master
 [submodule "intel-device-plugins-for-kubernetes"]
 	path = intel-device-plugins-for-kubernetes
 	url = https://github.com/intel/intel-device-plugins-for-kubernetes.git
 	branch = master
-[submodule "openssl"]
-	path = openssl
-	url = https://github.com/openssl/openssl.git
-	branch = OpenSSL_1_1_1-stable
-[submodule "k6"]
-	path = k6
-	url = https://github.com/ipuustin/k6.git
-	branch = TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+[submodule "envoy-openssl"]
+	path = envoy-openssl
+	url = https://github.com/rojkov/envoy-openssl.git
+	branch = async-mode

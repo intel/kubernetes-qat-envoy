@@ -10,7 +10,7 @@
 
 # NOTE: Replace the `qat_envoy_dest` value with the current absolute path
 qat_envoy_dest: "/home/vagrant/kubernetes-qat-envoy/"
-qat_base_version: "1.7.l.4.4.0-00023"
+qat_base_version: "1.7.l.4.6.0-00025"
 #qat_base_version: "1.7.l.4.3.0-00033"
 qat_driver_version: "{{ qat_base_version }}"
 qat_plugin_version: "{{ qat_base_version }}"

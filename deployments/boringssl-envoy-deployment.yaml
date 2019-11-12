@@ -34,15 +34,15 @@ data:
         filter_chains:
           tls_context:
             common_tls_context:
-              private_key_operations:
+              private_key_provider:
                 provider_name: qat
                 typed_config:
-                  "@type": "type.googleapis.com/qat.QatPrivateKeyOperationsConfig"
+                  "@type": "type.googleapis.com/qat.QatPrivateKeyMethodConfig"
                   section_name: ${QAT_SECTION_NAME}
                   poll_delay: ${POLL_DELAY}
+                  private_key: "/etc/envoy/tls/tls.key"
               tls_certificates:
                 certificate_chain: { "filename": "/etc/envoy/tls/tls.crt" }
-                private_key: { "filename": "/etc/envoy/tls/tls.key" }
           filters:
           - name: envoy.http_connection_manager
             config:

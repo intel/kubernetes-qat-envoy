@@ -1,0 +1,28 @@
+#
+# Copyright (c) 2019 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+---
+tools:
+  description: "Additional required tools"
+
+  bazel:
+    description: "Build and test software of any size, quickly and reliably"
+    url: "https://github.com/bazelbuild/bazel"
+    version: "1.0.0"
+    sha256: "f8490463360fff5992b5a5af93f930ff984588765f9ccf3e7dd03db5145fbf0f"
+
+libraries:
+  description: "Additional required libraries"
+
+  qat:
+    url: "https://01.org/sites/default/files/downloads"
+    version: "1.7.l.4.6.0-00025"
+    sha256: "8381567a11766ab89e556a41aad9a71031209f68b27ae0c49ff59757661162f4"
+
+  qat_engine:
+    url: "https://github.com/intel/QAT_Engine/archive"
+    version: "0.5.42"
+    sha256: "d95dc9b5f19f762bbd4b730492f5f3e6a144bf58088cb74aa82d4d3b4c5dd568"

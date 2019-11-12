@@ -1,67 +1,14 @@
 FROM clearlinux:base as builder
 
-ADD qat1.7.l.4.3.0-00033.tar.gz .
-ADD openssl openssl
-ADD QAT_Engine QAT_Engine
-ADD envoy envoy
+COPY . .
+RUN mv envoy-openssl.WORKSPACE envoy-openssl/WORKSPACE && \
+    rm -rf envoy-openssl/envoy && \
+    mv envoy envoy-openssl/envoy
 
-# Add bundles and deps
-RUN rm -rf /run/lock/clrtrust.lock
-RUN clrtrust generate && swupd update && swupd bundle-add os-core-dev
-RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/0.19.2/bazel-0.19.2-installer-linux-x86_64.sh && \
-    chmod +x bazel-0.19.2-installer-linux-x86_64.sh && \
-    ./bazel-0.19.2-installer-linux-x86_64.sh --user
-
-# Build QAT library
-ENV ICP_ROOT /
-ENV ICP_BUILD_OUTPUT /build
-ENV ICP_ENV_DIR /quickassist/build_system/build_files/env_files
-ENV ICP_BUILDSYSTEM_PATH /quickassist/build_system
-ENV KERNEL_SOURCE_ROOT /tmp
-
-RUN sed -i -e 's/cmn_ko$//' quickassist/Makefile && \
-    ./configure --enable-qat-uio && \
-    make -f quickassist/Makefile user && \
-    make adf-ctl-all && \
-    install -m 755 build/libqat_s.so /usr/lib && \
-    install -m 755 build/libusdm_drv_s.so /usr/lib && \
-    install -m 755 build/adf_ctl /usr/bin && \
-    install -d /etc/ld.so.conf.d && \
-    echo /usr/lib > /etc/ld.so.conf.d/qat.conf && \
-    ldconfig
-
-# Configure OpenSSL
-RUN cd /openssl && ./config
-
-# Build QAT Engine
-ENV PERL5LIB /openssl
-RUN cd /QAT_Engine && \
-    ./autogen.sh && \
-    ./configure \
-    --with-qat_dir=/ \
-    --with-openssl_dir=/openssl \
-    --with-openssl_install_dir=/usr/lib64 \
-    --enable-upstream_driver \
-    --enable-usdm \
-    --with-qat_install_dir=/usr/lib \
-    --enable-openssl_install_build_arch_path && \
-    make && \
-    make install && \
-    ldconfig
-
-# Build Envoy
-RUN install -d /usr/local/lib64 && \
-    cd /usr/local/lib64 && \
-    ln -s /usr/lib64/libssl.so && \
-    ln -s /usr/lib64/libcrypto.so
-
-RUN cd /envoy && \
-    mkdir -p /.cache/bazel/_bazel_root/ && \
-    /.bazel/bin/bazel build //source/exe:envoy-static
+RUN bash -f scripts/build_qat_envoy.sh
 
 # Start creating the target image
 FROM clearlinux:base
-ADD /configs/openssl.cnf .
 
 COPY --from=builder /usr/lib64/libstdc++.so.6 /usr/lib64
 COPY --from=builder /usr/lib/libqat_s.so /usr/lib
@@ -69,16 +16,15 @@ COPY --from=builder /usr/lib/libusdm_drv_s.so /usr/lib
 COPY --from=builder /usr/lib64/lib/libqat.so /usr/lib
 COPY --from=builder /usr/bin/adf_ctl /usr/bin
 COPY --from=builder /usr/lib64/engines-1.1/qat.so /usr/lib64/engines-1.1
-COPY --from=builder /envoy/bazel-bin/source/exe/envoy-static /
+COPY --from=builder /envoy-openssl/bazel-bin/envoy /envoy-static
 
 RUN ln -s /usr/lib/libqat.so /usr/lib/libqat.so.0 && \
     ln -s /usr/lib/libqat.so /usr/lib/libqat.so.0.0.0 && \
     install -d /etc/ld.so.conf.d && \
     install -d /etc/ssl && \
     echo /usr/lib > /etc/ld.so.conf.d/qat.conf && \
-    ldconfig && \
-    mv openssl.cnf /etc/ssl
+    ldconfig
 
 STOPSIGNAL SIGTERM
 
-ENTRYPOINT ["/envoy-static", "-c /etc/envoy/config/envoy-conf.yaml"]
+ENTRYPOINT ["/envoy-static", "-c", "/etc/envoy/config/envoy-conf.yaml", "--cpuset-threads"]

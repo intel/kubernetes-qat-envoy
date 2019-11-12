@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
       - name: benchmark
-        image: loadimpact/k6:custom
+        image: loadimpact/k6:master
         command: ["k6", "run", "--vus", "30", "--duration", "20s", "/etc/k6-config/k6-testing-config.js"]
         volumeMounts:
         - name: config-volume

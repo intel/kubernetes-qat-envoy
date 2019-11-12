@@ -1,6 +1,7 @@
 vagrant/.vagrant
 vagrant/inventory/
 vagrant/roles
+vagrant/OVMF.fd
 qat*.tar.gz
 *.retry
 *.log

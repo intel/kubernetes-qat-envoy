@@ -97,13 +97,15 @@ spec:
         - name: envoy-sidecar
           image: envoy-qat:devel
           imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities:
+              add: ["IPC_LOCK"]
           command:
             - "/envoy-static"
           args:
             - "-c"
             - "/etc/envoy/config/envoy-conf.yaml"
-            - "--concurrency"
-            - "6"
+            - "--cpuset-threads"
           env:
             - name: loglevel
               value: debug
