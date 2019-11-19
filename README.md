@@ -122,6 +122,20 @@ Then delete the job:
 
     $ kubectl delete job benchmark
 
+## Envoy using BoringSSL QAT private key provider
+
+You can also build a version of Envoy using the BoringSSL QAT private key provider:
+
+    # docker image build -t envoy-boringssl-qat:devel -f Dockerfile.clr.boringssl.envoy .
+
+To test that everything works, run the new container:
+
+    $ scripts/envoy-boringssl-docker.sh
+
+Then in another shell access Envoy over TLS:
+
+    $ curl --cacert cert.pem https://localhost:9000
+
 ## Experimenting with SDS
 
 See the example [here](examples/sds.md).
