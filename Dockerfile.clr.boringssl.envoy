@@ -1,0 +1,60 @@
+# CLEAR_LINUX_BASE and CLEAR_LINUX_VERSION can be used to make the build
+# reproducible by choosing an image by its hash and installing an OS version
+# with --version=:
+# CLEAR_LINUX_BASE=clearlinux@sha256:b8e5d3b2576eb6d868f8d52e401f678c873264d349e469637f98ee2adf7b33d4
+# CLEAR_LINUX_VERSION="--version=29970"
+#
+# This is used on release branches before tagging a stable version.
+# The master branch defaults to using the latest Clear Linux.
+ARG CLEAR_LINUX_BASE=clearlinux:base
+
+FROM ${CLEAR_LINUX_BASE} as builder
+
+ARG CLEAR_LINUX_VERSION=
+
+# try twice to work around a swupd bug
+RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION} || swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
+
+RUN mkdir /install_root \
+    && swupd os-install \
+    ${CLEAR_LINUX_VERSION} \
+    --path /install_root \
+    --statedir /swupd-state \
+    --bundles=os-core,libstdcpp \
+    --no-boot-update \
+    && rm -rf /install_root/var/lib/swupd/*
+
+RUN swupd bundle-add os-core-dev c-basic python2-basic
+
+# for installing bazel as user
+ENV HOME /root
+
+# bazel 1.1 is not packaged to Clear Linux yet, change to that bundle when it is
+RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/1.1.0/bazel-1.1.0-installer-linux-x86_64.sh
+RUN chmod +x bazel-1.1.0-installer-linux-x86_64.sh
+RUN ./bazel-1.1.0-installer-linux-x86_64.sh --user
+
+RUN git clone --recurse-submodules --single-branch --branch qat-provider-master https://github.com/ipuustin/envoy.git envoy
+
+# build and install Envoy
+RUN cd envoy && /root/.bazel/bin/bazel build --verbose_failures -c opt -s //source/exe:envoy-static \
+    && install -D /envoy/LICENSE /install_root/usr/local/share/package-licenses/envoy/LICENSE \
+    && install -D /envoy/bazel-bin/source/exe/envoy-static /install_root/usr/local/bin/envoy-static
+
+# generate entrypoint script
+RUN echo -e "#!/bin/sh\n" \
+            "set -e\n" \
+            "/usr/bin/envsubst < /etc/envoy/config/envoy-conf.yaml > /tmp/envoy-conf.yaml\n" \
+            "/usr/local/bin/envoy-static -c /tmp/envoy-conf.yaml \$@\n" > /entrypoint.sh
+
+RUN install -m 755 -D /entrypoint.sh /install_root/usr/local/bin/entrypoint.sh
+RUN install -D /usr/bin/envsubst /install_root/usr/bin/envsubst
+
+FROM scratch as final
+COPY --from=builder /install_root /
+
+ENV PATH=/usr/local/bin
+ENV QAT_SECTION_NAME SHIM
+ENV POLL_DELAY 2000000
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
