@@ -136,10 +136,6 @@ Then in another shell access Envoy over TLS:
 
     $ curl --cacert cert.pem https://localhost:9000
 
-## Experimenting with SDS
-
-See the example [here](examples/sds.md).
-
 ## License
 
 All files in this repository are licensed with BSD license (see `COPYING`), unless they are explicitly licensed with some other license.  This does not apply to the git submodules.
