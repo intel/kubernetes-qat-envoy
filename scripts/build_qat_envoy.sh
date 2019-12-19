@@ -197,7 +197,7 @@ build_envoy() {
 	pushd "${ENVOY_DIR}"
 	case $ID in
 		clear-linux*|debian|ubuntu)
-		    CXXFLAGS="-DENVOY_SSL_VERSION=\\\"OpenSSL\\\"" ~/.bazel/bin/bazel build -j "$(jobs)" -c opt //:envoy --define boringssl=disabled
+		    ~/.bazel/bin/bazel build -j "$(jobs)" //:envoy
 		    ;;
 	esac
 	popd

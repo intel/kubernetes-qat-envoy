@@ -11,8 +11,8 @@ tools:
   bazel:
     description: "Build and test software of any size, quickly and reliably"
     url: "https://github.com/bazelbuild/bazel"
-    version: "1.0.0"
-    sha256: "f8490463360fff5992b5a5af93f930ff984588765f9ccf3e7dd03db5145fbf0f"
+    version: "1.2.1"
+    sha256: "ae6249e25b0f5a06d79fad90325477dd56275657951cf7aa6a3cbcd79fc4d749"
 
 libraries:
   description: "Additional required libraries"
