@@ -39,7 +39,7 @@ systemReserved:
   memory: 256M
 kubeReserved:
   cpu: 500m
-memory: 256M
+  memory: 256M
 ...
 ```
 
