@@ -24,20 +24,20 @@ RUN mkdir /install_root \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
-RUN swupd bundle-add os-core-dev c-basic python2-basic
+RUN swupd bundle-add os-core-dev c-basic python-basic
 
 # for installing bazel as user
 ENV HOME /root
 
 # bazel 1.1 is not packaged to Clear Linux yet, change to that bundle when it is
-RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/1.1.0/bazel-1.1.0-installer-linux-x86_64.sh
-RUN chmod +x bazel-1.1.0-installer-linux-x86_64.sh
-RUN ./bazel-1.1.0-installer-linux-x86_64.sh --user
+RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/2.0.0/bazel-2.0.0-installer-linux-x86_64.sh
+RUN chmod +x bazel-2.0.0-installer-linux-x86_64.sh
+RUN ./bazel-2.0.0-installer-linux-x86_64.sh --user
 
-RUN git clone --recurse-submodules --single-branch --branch qat-provider-master https://github.com/ipuustin/envoy.git envoy
+RUN git clone --recurse-submodules --single-branch --branch v1.13.0-qat4 https://github.com/ipuustin/envoy.git envoy
 
 # build and install Envoy
-RUN cd envoy && /root/.bazel/bin/bazel build --verbose_failures -c opt -s //source/exe:envoy-static \
+RUN cd envoy && /root/.bazel/bin/bazel build --verbose_failures -c opt -s //source/exe:envoy-static --extra_toolchains=@rules_python//python:autodetecting_toolchain_nonstrict \
     && install -D /envoy/LICENSE /install_root/usr/local/share/package-licenses/envoy/LICENSE \
     && install -D /envoy/bazel-bin/source/exe/envoy-static /install_root/usr/local/bin/envoy-static
 
