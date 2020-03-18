@@ -1,10 +1,9 @@
 #pragma once
 
-#include "envoy_qatzip/qatzip.pb.h"
+#include "extensions/filters/http/common/compressor/compressor.h"
 
 #include "envoy_qatzip/compressor/qatzip_compressor_impl.h"
-
-#include "extensions/filters/http/common/compressor/compressor.h"
+#include "envoy_qatzip/qatzip.pb.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -16,9 +15,8 @@ namespace Qatzip {
  */
 class QatzipFilterConfig : public Common::Compressors::CompressorFilterConfig {
 public:
-  QatzipFilterConfig(const qatzip::Qatzip& qatzip,
-                     const std::string& stats_prefix, Stats::Scope& scope,
-                     Runtime::Loader& runtime);
+  QatzipFilterConfig(const qatzip::Qatzip& qatzip, const std::string& stats_prefix,
+                     Stats::Scope& scope, Runtime::Loader& runtime);
 
   unsigned int compressionLevel() const { return compression_level_; };
   unsigned int hardwareBufferSize() const { return hardware_buffer_size_; };
@@ -29,8 +27,8 @@ public:
 
 private:
   static unsigned int compressionLevelUint(Protobuf::uint32 compression_level);
-  static unsigned int hardwareBufferSizeEnum(
-      qatzip::Qatzip_HardwareBufferSize hardware_buffer_size);
+  static unsigned int
+  hardwareBufferSizeEnum(qatzip::Qatzip_HardwareBufferSize hardware_buffer_size);
   static unsigned int inputSizeThresholdUint(Protobuf::uint32 input_size_threshold);
   static unsigned int streamBufferSizeUint(Protobuf::uint32 stream_buffer_size);
 

@@ -8,8 +8,8 @@ namespace HttpFilters {
 namespace Qatzip {
 
 Http::FilterFactoryCb QatzipFilterFactory::createFilterFactoryFromProtoTyped(
-    const qatzip::Qatzip& proto_config,
-    const std::string& stats_prefix, Server::Configuration::FactoryContext& context) {
+    const qatzip::Qatzip& proto_config, const std::string& stats_prefix,
+    Server::Configuration::FactoryContext& context) {
   Common::Compressors::CompressorFilterConfigSharedPtr config =
       std::make_shared<QatzipFilterConfig>(proto_config, stats_prefix, context.scope(),
                                            context.runtime());

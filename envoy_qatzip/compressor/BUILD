@@ -12,9 +12,9 @@ envoy_cc_library(
     name = "qatzip_compressor_lib",
     srcs = ["qatzip_compressor_impl.cc"],
     hdrs = ["qatzip_compressor_impl.h"],
-	repository = "@envoy",
+    repository = "@envoy",
     deps = [
-		"@qatzip//:qatzip",
         "@envoy//include/envoy/compressor:compressor_interface",
+        "@qatzip",
     ],
 )

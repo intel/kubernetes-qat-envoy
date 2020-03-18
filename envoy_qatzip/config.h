@@ -1,10 +1,10 @@
 #pragma once
 
-#include "envoy_qatzip/qatzip.pb.h"
-#include "envoy_qatzip/qatzip.pb.validate.h"
-
 #include "extensions/filters/http/common/factory_base.h"
 #include "extensions/filters/http/well_known_names.h"
+
+#include "envoy_qatzip/qatzip.pb.h"
+#include "envoy_qatzip/qatzip.pb.validate.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -14,15 +14,13 @@ namespace Qatzip {
 /**
  * Config registration for the brotli filter. @see NamedHttpFilterConfigFactory.
  */
-class QatzipFilterFactory
-    : public Common::FactoryBase<qatzip::Qatzip> {
+class QatzipFilterFactory : public Common::FactoryBase<qatzip::Qatzip> {
 public:
   QatzipFilterFactory() : FactoryBase("envoy.qatzip") {}
 
 private:
   Http::FilterFactoryCb
-  createFilterFactoryFromProtoTyped(const qatzip::Qatzip& config,
-                                    const std::string& stats_prefix,
+  createFilterFactoryFromProtoTyped(const qatzip::Qatzip& config, const std::string& stats_prefix,
                                     Server::Configuration::FactoryContext& context) override;
 };
 

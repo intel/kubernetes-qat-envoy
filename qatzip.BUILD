@@ -20,6 +20,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "@envoy//bazel/foreign_cc:zlib",
-        "@qat//:qat",
+        "@qat",
     ],
 )
