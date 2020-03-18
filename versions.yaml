@@ -11,16 +11,16 @@ tools:
   bazel:
     description: "Build and test software of any size, quickly and reliably"
     url: "https://github.com/bazelbuild/bazel"
-    version: "1.2.1"
-    sha256: "ae6249e25b0f5a06d79fad90325477dd56275657951cf7aa6a3cbcd79fc4d749"
+    version: "2.0.0"
+    sha256: "2fbdc9c0e3d376697caf0ee3673b7c9475214068c55a01b9744891e131f90b87"
 
 libraries:
   description: "Additional required libraries"
 
   qat:
     url: "https://01.org/sites/default/files/downloads"
-    version: "1.7.l.4.6.0-00025"
-    sha256: "8381567a11766ab89e556a41aad9a71031209f68b27ae0c49ff59757661162f4"
+    version: "1.7.l.4.8.0-00005"
+    sha256: "5d0770d20fd77c516a247f2917e47048432cea1394c00d9aa8b0b6a85030fd2c"
 
   qat_engine:
     url: "https://github.com/intel/QAT_Engine/archive"
