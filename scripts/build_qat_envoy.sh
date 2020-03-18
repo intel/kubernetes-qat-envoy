@@ -64,11 +64,12 @@ setup() {
 			mkdir -p /usr/share/man/man1
 			apt-get -o Acquire::Check-Valid-Until=false update
 			apt-get -y install git libtool \
-					cmake clang-format-7 automake ninja-build curl \
+					cmake automake ninja-build curl \
 					git build-essential wget libudev-dev libssl-dev \
 					openssl pkg-config autoconf autogen libtool \
 					libssl-dev pkg-config zip g++ zlib1g-dev unzip \
-					python python3-pip curl gnupg2 python3
+					python python3-pip curl gnupg2 python3 \
+					clang lld
 			;;
 	esac
 
