@@ -7,3 +7,5 @@ qat*.tar.gz
 *.log
 *.swp
 .tox/
+*~
+bazel-*
