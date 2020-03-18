@@ -56,7 +56,7 @@ setup() {
 			rm -rf /run/lock/clrtrust.lock
 			clrtrust generate
 			swupd update
-			swupd bundle-add os-core-dev python2-basic
+			swupd bundle-add os-core-dev python2-basic python3-basic llvm deprecated-python2
 			;;
 		debian|ubuntu)
 			info "Debian/Ubuntu OS detected"
