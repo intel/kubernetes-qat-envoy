@@ -68,11 +68,11 @@ setup() {
 					git build-essential wget libudev-dev libssl-dev \
 					openssl pkg-config autoconf autogen libtool \
 					libssl-dev pkg-config zip g++ zlib1g-dev unzip \
-					python python-pip curl gnupg2 python3
+					python python3-pip curl gnupg2 python3
 			;;
 	esac
 
-	pip install shyaml
+	pip3 install shyaml
 
 	install_bazel
 	"${BAZEL_BIN}" --user
