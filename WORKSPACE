@@ -2,10 +2,24 @@ workspace(name = "kubernetes_qat_envoy")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+http_archive(
+    name = "qatzip",
+    build_file = "@//:qatzip.BUILD",
+    sha256 = "461c155fa9153c217c5dc7d7cf44cb31106ab6e5754a7ee5fbd8121b4c6cdd4b",
+    strip_prefix = "QATzip-1.0.1",
+	urls = ["https://github.com/intel/QATzip/archive/v1.0.1.tar.gz"],
+)
+
 new_local_repository(
     name = "openssl",
     path = "/usr/lib/x86_64-linux-gnu",
     build_file = "envoy-openssl/openssl_host_shared.BUILD"
+)
+
+new_local_repository(
+    name = "qat",
+    path = "/",
+    build_file = "qat_host_shared.BUILD"
 )
 
 local_repository(
