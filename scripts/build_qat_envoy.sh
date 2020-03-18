@@ -18,7 +18,7 @@ readonly SCRIPTS_DIR="$(realpath "$(dirname "$0")")"
 readonly VERSIONS_FILE="${SCRIPTS_DIR}/../versions.yaml"
 readonly QAT_ENGINE_DIR="${SCRIPTS_DIR}/../QAT_Engine"
 readonly OPENSSL_DIR="/usr"
-readonly ENVOY_DIR="${SCRIPTS_DIR}/../envoy-openssl"
+readonly ENVOY_DIR="${SCRIPTS_DIR}/.."
 readonly QAT_LIB_DIR="${SCRIPTS_DIR}/../QAT_Lib"
 
 #shellcheck source=lib.sh
