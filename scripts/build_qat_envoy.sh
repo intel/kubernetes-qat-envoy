@@ -56,7 +56,7 @@ setup() {
 			rm -rf /run/lock/clrtrust.lock
 			clrtrust generate
 			swupd update
-			swupd bundle-add os-core-dev python2-basic python3-basic llvm deprecated-python2
+			swupd bundle-add os-core-dev python3-basic llvm
 			;;
 		debian|ubuntu)
 			info "Debian/Ubuntu OS detected"
@@ -198,7 +198,7 @@ build_envoy() {
 	pushd "${ENVOY_DIR}"
 	case $ID in
 		clear-linux*|debian|ubuntu)
-		    ~/.bazel/bin/bazel build -j "$(jobs)" //:envoy
+		    ~/.bazel/bin/bazel build -j "$(jobs)" //:envoy --host_force_python=PY3
 		    ;;
 	esac
 	popd

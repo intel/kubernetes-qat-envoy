@@ -17,7 +17,7 @@ Then go to the created directory and fetch the QAT driver:
 
 ## Create a container for QAT-accelerated Envoy
 
-    # docker image build -t envoy-qat:devel -f Dockerfile.envoy .
+    # docker image build -t envoy-qat:devel -f Dockerfile.openssl .
 
 Add the image to the Docker registry where all nodes in your cluster can find it. If you load the image to the Docker image cache on all nodes, you can skip this step. The exact commands depend on the Docker infrastructure you have.
 
@@ -121,7 +121,7 @@ Then delete the job:
 
 You can also build a version of Envoy using the BoringSSL QAT private key provider:
 
-    # docker image build -t envoy-boringssl-qat:devel -f Dockerfile.clr.boringssl.envoy .
+    # docker image build -t envoy-boringssl-qat:devel -f Dockerfile.boringssl .
 
 To test that everything works, run the new container:
 
