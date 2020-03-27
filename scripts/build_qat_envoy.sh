@@ -18,7 +18,7 @@ readonly SCRIPTS_DIR="$(realpath "$(dirname "$0")")"
 readonly VERSIONS_FILE="${SCRIPTS_DIR}/../versions.yaml"
 readonly QAT_ENGINE_DIR="${SCRIPTS_DIR}/../QAT_Engine"
 readonly OPENSSL_DIR="/usr"
-readonly ENVOY_DIR="${SCRIPTS_DIR}/../envoy-openssl"
+readonly ENVOY_DIR="${SCRIPTS_DIR}/.."
 readonly QAT_LIB_DIR="${SCRIPTS_DIR}/../QAT_Lib"
 
 #shellcheck source=lib.sh
@@ -56,7 +56,7 @@ setup() {
 			rm -rf /run/lock/clrtrust.lock
 			clrtrust generate
 			swupd update
-			swupd bundle-add os-core-dev python2-basic
+			swupd bundle-add os-core-dev python2-basic python3-basic llvm deprecated-python2
 			;;
 		debian|ubuntu)
 			info "Debian/Ubuntu OS detected"
@@ -64,15 +64,16 @@ setup() {
 			mkdir -p /usr/share/man/man1
 			apt-get -o Acquire::Check-Valid-Until=false update
 			apt-get -y install git libtool \
-					cmake clang-format-7 automake ninja-build curl \
+					cmake automake ninja-build curl \
 					git build-essential wget libudev-dev libssl-dev \
 					openssl pkg-config autoconf autogen libtool \
 					libssl-dev pkg-config zip g++ zlib1g-dev unzip \
-					python python-pip curl gnupg2 python3
+					python python3-pip curl gnupg2 python3 \
+					clang lld
 			;;
 	esac
 
-	pip install shyaml
+	pip3 install shyaml
 
 	install_bazel
 	"${BAZEL_BIN}" --user

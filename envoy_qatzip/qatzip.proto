@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package qatzip;
+
+import "envoy/extensions/filters/http/compressor/v3/compressor.proto";
+
+import "google/protobuf/wrappers.proto";
+
+import "validate/validate.proto";
+
+message Qatzip {
+  // Value from 1 to 12 that controls the main compression speed-density lever.
+  // The higher quality, the slower compression. The default value is 12.
+  google.protobuf.UInt32Value compression_level = 1 [(validate.rules).uint32 = {gte: 1, lte: 9}];
+
+  enum HardwareBufferSize {
+    DEFAULT = 0;
+    SZ_4K = 1;
+    SZ_8K = 2;
+    SZ_32K = 3;
+    SZ_64K = 4;
+    SZ_128K = 5;
+    SZ_512K = 6;
+  }
+
+  // A size of QAT hardware buffer. This field will be set to "DEFAULT" if not specified.
+  HardwareBufferSize hardware_buffer_size = 2 [(validate.rules).enum.defined_only = true];
+
+  // Threshold of compression service’s input size for software failover.
+  // If the size of input request less than the threshold, QATZip will route the request to software
+  // compressor. The default value is 1024. The maximum value is 512*1024.
+  google.protobuf.UInt32Value input_size_threshold = 3
+      [(validate.rules).uint32 = {gte: 128, lte: 524288}];
+
+  // A size of stream buffer. The default value is 128 * 1024. The maximum value is 2*1024*1024 -
+  // 5*1024
+  google.protobuf.UInt32Value stream_buffer_size = 4
+      [(validate.rules).uint32 = {gte: 1024, lte: 2092032}];
+
+  // Set of configuration parameters common for all compression filters. If this field is set then
+  // the fields `content_length`, `content_type`, `disable_on_etag_header` and
+  // `remove_accept_encoding_header` are ignored.
+  envoy.extensions.filters.http.compressor.v3.Compressor compressor = 5;
+}
