@@ -1,26 +1,82 @@
 FROM clearlinux:base as builder
 
+ARG QAT_DRIVER_RELEASE="qat1.7.l.4.9.0-00008"
+ARG QAT_ENGINE_VERSION="v0.5.44"
+ARG QAT_ENGINE_FLAGS="--disable-multibuff-offload"
+
 COPY . .
 
-RUN bash -f scripts/build_qat_envoy.sh
+####swupd bundle-add --skip-diskspace-check --allow-insecure-http \
+####devpkg-systemd \
+####devpkg-openssl \
+####c-basic \
+####curl \
+####git \
+####llvm9 \
+####python3-basic \
+####os-core-dev && \
 
-# Start creating the target image
+RUN swupd mirror --allow-insecure-http \
+   -s http://linux-ftp.fi.intel.com/pub/mirrors/clearlinux/update && \
+    swupd os-install \
+    --allow-insecure-http \
+    --version 32880 \
+    --bundles=devpkg-systemd,devpkg-openssl,c-basic,curl,git,llvm,python3-basic,os-core-dev / && \
+    git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine && \
+    git clone https://github.com/intel/ipp-crypto && \
+    mkdir QAT_Lib && cd QAT_Lib && \
+    curl -L https://01.org/sites/default/files/downloads/$QAT_DRIVER_RELEASE.tar.gz | tar zx
+
+WORKDIR /QAT_Lib
+
+RUN sed -i -e 's/cmn_ko$//' -e 's/lac_kernel$//' quickassist/Makefile && \
+    KERNEL_SOURCE_ROOT=/tmp ./configure && \
+    make quickassist-all adf-ctl-all && \
+    install -m 755 build/libqat_s.so /usr/lib/ && \
+    install -m 755 build/libusdm_drv_s.so /usr/lib/ && \
+    install -m 755 build/adf_ctl /usr/bin/ && \
+    cd /ipp-crypto/sources/ippcp/crypto_mb && \
+    sed -i -e '/OPENSSL_USE_STATIC_LIBS/d' CMakeLists.txt && \
+    cmake . -B"../build" \
+    -DOPENSSL_INCLUDE_DIR=/usr/include/openssl \
+    -DOPENSSL_LIBRARIES=/usr/lib64 \
+    -DOPENSSL_ROOT_DIR=/usr/bin/openssl && \
+    cd ../build && \
+    make crypto_mb && make install && \
+    install -m 755 bin/vfy_ifma_cp_rsa_mb /usr/bin/ && \
+    install -m 755 bin/vfy_ifma_rsa_mb /usr/bin/ && \
+    cd /QAT_Engine && \
+    ./autogen.sh && \
+    ./configure \
+    $QAT_ENGINE_FLAGS \
+    --with-qat_dir=/QAT_Lib \
+    --enable-qat_debug \
+    --with-openssl_install_dir=/usr/lib64 \
+    --with-qat_install_dir=/usr/lib \
+    --with-multibuff_dir=/ipp-crypto/sources/ippcp/crypto_mb \
+    --with-multibuff_install_dir=/usr/local/lib \
+    --enable-openssl_install_build_arch_path && \
+    make && make install
+
+WORKDIR /
+
+ENV HOME /root
+RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/2.0.0/bazel-2.0.0-installer-linux-x86_64.sh && \
+    chmod +x bazel-2.0.0-installer-linux-x86_64.sh && \
+    ./bazel-2.0.0-installer-linux-x86_64.sh --user
+RUN /root/.bazel/bin/bazel build -c dbg //:envoy --host_force_python=PY3
+
 FROM clearlinux:base
-
+RUN swupd bundle-add --skip-diskspace-check gdb
 COPY --from=builder /usr/lib64/libstdc++.so.6 /usr/lib64
-COPY --from=builder /usr/lib/libqat_s.so /usr/lib
-COPY --from=builder /usr/lib/libusdm_drv_s.so /usr/lib
-COPY --from=builder /usr/lib64/lib/libqat.so /usr/lib
+COPY --from=builder /usr/lib/libqat_s.so /usr/lib64
+COPY --from=builder /usr/lib/libusdm_drv_s.so /usr/lib64
+COPY --from=builder /usr/lib64/lib/libqat.so /usr/lib64
 COPY --from=builder /usr/bin/adf_ctl /usr/bin
+COPY --from=builder /usr/bin/vfy_ifma_cp_rsa_mb /usr/bin
+COPY --from=builder /usr/bin/vfy_ifma_rsa_mb /usr/bin
 COPY --from=builder /usr/lib64/engines-1.1/qat.so /usr/lib64/engines-1.1
 COPY --from=builder /bazel-bin/envoy /envoy-static
-
-RUN ln -s /usr/lib/libqat.so /usr/lib/libqat.so.0 && \
-    ln -s /usr/lib/libqat.so /usr/lib/libqat.so.0.0.0 && \
-    install -d /etc/ld.so.conf.d && \
-    install -d /etc/ssl && \
-    echo /usr/lib > /etc/ld.so.conf.d/qat.conf && \
-    ldconfig
 
 STOPSIGNAL SIGTERM
 
