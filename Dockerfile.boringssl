@@ -24,7 +24,7 @@ RUN mkdir /install_root \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
-RUN swupd bundle-add os-core-dev c-basic python-basic
+RUN swupd bundle-add os-core-dev c-basic python3-basic
 
 # for installing bazel as user
 ENV HOME /root
