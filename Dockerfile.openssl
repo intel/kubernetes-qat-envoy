@@ -7,7 +7,7 @@ ARG QAT_ENGINE_FLAGS="--disable-multibuff-offload"
 RUN swupd update && \
     swupd bundle-add \
     --skip-diskspace-check \
-    --allow-insecure-http \
+    --no-boot-update \
     devpkg-systemd \
     devpkg-openssl \
     c-basic \
@@ -56,7 +56,6 @@ WORKDIR /
 COPY . .
 
 ENV HOME /root
-RUN sed -i -e '49d'  -e '50i\        "//conditions:default": {"CC" : "clang"},'  envoy/bazel/foreign_cc/BUILD
 RUN eval $(cut -d = -f 2- < clang.bazelrc) && \
     echo "build:clang --linkopt=-L$($LLVM_CONFIG --libdir)" >> clang.bazelrc && \
     echo "build:clang --linkopt=-Wl,-rpath,$($LLVM_CONFIG --libdir)" >> clang.bazelrc
