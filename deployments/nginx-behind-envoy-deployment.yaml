@@ -39,7 +39,6 @@ data:
               stat_prefix: ingress_http
               route_config:
                 name: local_route
-                require_ssl: all
                 virtual_hosts:
                 - name: backend
                   domains:
