@@ -14,12 +14,22 @@ const unsigned int DefaultStreamBufferSize = 128 * 1024;
 
 QatzipFilterConfig::QatzipFilterConfig(const qatzip::Qatzip& qatzip,
                                        const std::string& stats_prefix, Stats::Scope& scope,
-                                       Runtime::Loader& runtime)
+                                       Runtime::Loader& runtime, ThreadLocal::SlotAllocator& tls)
     : CompressorFilterConfig(qatzip.compressor(), stats_prefix + "qatzip.", scope, runtime, "gzip"),
-      compression_level_(compressionLevelUint(qatzip.compression_level().value())),
-      hardware_buffer_size_(hardwareBufferSizeEnum(qatzip.hardware_buffer_size())),
-      input_size_threshold_(inputSizeThresholdUint(qatzip.input_size_threshold().value())),
-      stream_buffer_size_(streamBufferSizeUint(qatzip.stream_buffer_size().value())) {}
+      tls_slot_(tls.allocateSlot()) {
+  QzSessionParams_T params;
+
+  int status = qzGetDefaults(&params);
+  RELEASE_ASSERT(status == QZ_OK, "failed to initialize hardware");
+  params.comp_lvl = compressionLevelUint(qatzip.compression_level().value());
+  params.hw_buff_sz = hardwareBufferSizeEnum(qatzip.hardware_buffer_size());
+  params.strm_buff_sz = streamBufferSizeUint(qatzip.stream_buffer_size().value());
+  params.input_sz_thrshold = inputSizeThresholdUint(qatzip.input_size_threshold().value());
+
+  tls_slot_->set([params](Event::Dispatcher&) -> ThreadLocal::ThreadLocalObjectSharedPtr {
+    return std::make_shared<QatzipThreadLocal>(params);
+  });
+}
 
 unsigned int
 QatzipFilterConfig::hardwareBufferSizeEnum(qatzip::Qatzip_HardwareBufferSize hardware_buffer_size) {
@@ -54,10 +64,32 @@ unsigned int QatzipFilterConfig::streamBufferSizeUint(Protobuf::uint32 stream_bu
 }
 
 std::unique_ptr<Compressor::Compressor> QatzipFilterConfig::makeCompressor() {
-  auto compressor = std::make_unique<Compressor::QatzipCompressorImpl>();
-  compressor->init(compressionLevel(), hardwareBufferSize(), streamBufferSize(),
-                   inputSizeThreshold());
-  return compressor;
+  return std::make_unique<Compressor::QatzipCompressorImpl>(
+      tls_slot_->getTyped<QatzipThreadLocal>().getSession());
+}
+
+QatzipFilterConfig::QatzipThreadLocal::QatzipThreadLocal(QzSessionParams_T params)
+    : params_(params), session_{}, initialized_(false) {}
+
+QatzipFilterConfig::QatzipThreadLocal::~QatzipThreadLocal() {
+  if (initialized_) {
+    qzTeardownSession(&session_);
+    qzClose(&session_);
+  }
+}
+
+QzSession_T* QatzipFilterConfig::QatzipThreadLocal::getSession() {
+  // The session must be initialized only once in every worker thread.
+  if (!initialized_) {
+
+    int status = qzInit(&session_, params_.sw_backup);
+    RELEASE_ASSERT(status == QZ_OK || status == QZ_DUPLICATE, "failed to initialize hardware");
+    status = qzSetupSession(&session_, &params_);
+    RELEASE_ASSERT(status == QZ_OK || status == QZ_DUPLICATE, "failed to setup session");
+    initialized_ = true;
+  }
+
+  return &session_;
 }
 
 } // namespace Qatzip

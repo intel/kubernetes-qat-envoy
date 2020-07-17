@@ -1,5 +1,7 @@
 #pragma once
 
+#include "envoy/thread_local/thread_local.h"
+
 #include "extensions/filters/http/common/compressor/compressor.h"
 
 #include "envoy_qatzip/compressor/qatzip_compressor_impl.h"
@@ -16,12 +18,8 @@ namespace Qatzip {
 class QatzipFilterConfig : public Common::Compressors::CompressorFilterConfig {
 public:
   QatzipFilterConfig(const qatzip::Qatzip& qatzip, const std::string& stats_prefix,
-                     Stats::Scope& scope, Runtime::Loader& runtime);
-
-  unsigned int compressionLevel() const { return compression_level_; };
-  unsigned int hardwareBufferSize() const { return hardware_buffer_size_; };
-  unsigned int inputSizeThreshold() const { return input_size_threshold_; };
-  unsigned int streamBufferSize() const { return stream_buffer_size_; };
+                     Stats::Scope& scope, Runtime::Loader& runtime,
+                     ThreadLocal::SlotAllocator& tls);
 
   std::unique_ptr<Compressor::Compressor> makeCompressor() override;
 
@@ -32,10 +30,17 @@ private:
   static unsigned int inputSizeThresholdUint(Protobuf::uint32 input_size_threshold);
   static unsigned int streamBufferSizeUint(Protobuf::uint32 stream_buffer_size);
 
-  unsigned int compression_level_;
-  unsigned int hardware_buffer_size_;
-  unsigned int input_size_threshold_;
-  unsigned int stream_buffer_size_;
+  struct QatzipThreadLocal : public ThreadLocal::ThreadLocalObject {
+    QatzipThreadLocal(QzSessionParams_T params);
+    virtual ~QatzipThreadLocal();
+    QzSession_T* getSession();
+
+    QzSessionParams_T params_;
+    QzSession_T session_;
+    bool initialized_;
+  };
+
+  ThreadLocal::SlotPtr tls_slot_;
 };
 
 } // namespace Qatzip
