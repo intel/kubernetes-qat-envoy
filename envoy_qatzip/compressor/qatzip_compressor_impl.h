@@ -36,6 +36,9 @@ private:
   std::unique_ptr<unsigned char[]> chunk_char_ptr_;
   QzSession_T* const session_;
   QzStream_T stream_;
+
+  uint32_t input_len_;
+  std::unique_ptr<unsigned char[]> trailer_;
 };
 
 } // namespace Compressor

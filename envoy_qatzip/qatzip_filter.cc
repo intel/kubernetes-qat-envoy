@@ -25,6 +25,7 @@ QatzipFilterConfig::QatzipFilterConfig(const qatzip::Qatzip& qatzip,
   params.hw_buff_sz = hardwareBufferSizeEnum(qatzip.hardware_buffer_size());
   params.strm_buff_sz = streamBufferSizeUint(qatzip.stream_buffer_size().value());
   params.input_sz_thrshold = inputSizeThresholdUint(qatzip.input_size_threshold().value());
+  params.data_fmt = QZ_DEFLATE_RAW;
 
   tls_slot_->set([params](Event::Dispatcher&) -> ThreadLocal::ThreadLocalObjectSharedPtr {
     return std::make_shared<QatzipThreadLocal>(params);
