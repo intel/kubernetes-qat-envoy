@@ -34,6 +34,7 @@ envoy_cc_library(
     deps = [
         ":pkg_cc_proto",
         "//envoy_qatzip/compressor:qatzip_compressor_lib",
+        "@envoy//include/envoy/thread_local:thread_local_interface",
         "@envoy//source/extensions/filters/http:well_known_names",
         "@envoy//source/extensions/filters/http/common:factory_base_lib",
         "@envoy//source/extensions/filters/http/common/compressor:compressor_lib",

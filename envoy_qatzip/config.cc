@@ -12,7 +12,7 @@ Http::FilterFactoryCb QatzipFilterFactory::createFilterFactoryFromProtoTyped(
     Server::Configuration::FactoryContext& context) {
   Common::Compressors::CompressorFilterConfigSharedPtr config =
       std::make_shared<QatzipFilterConfig>(proto_config, stats_prefix, context.scope(),
-                                           context.runtime());
+                                           context.runtime(), context.threadLocal());
   return [config](Http::FilterChainFactoryCallbacks& callbacks) -> void {
     callbacks.addStreamFilter(std::make_shared<Common::Compressors::CompressorFilter>(config));
   };
