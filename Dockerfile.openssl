@@ -69,7 +69,7 @@ RUN ./autogen.sh && \
     --with-openssl_install_dir=/usr/lib64 \
     --with-multibuff_install_dir=/usr/local \
     --enable-openssl_install_build_arch_path && \
-    sed -e 's:^\(const char \*engine_qat_id = \).*:\1"avx512":' e_qat.c && \
+    sed -i -e 's:^\(const char \*engine_qat_id = \).*:\1"avx512";:' e_qat.c && \
     make && make install && \
     mv /usr/lib64/engines-1.1/qat.so /usr/lib64/engines-1.1/avx512.so && \
     make clean && git restore e_qat.c && \
