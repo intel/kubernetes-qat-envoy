@@ -1,6 +1,6 @@
 #pragma once
 
-#include "envoy/compressor/compressor.h"
+#include "envoy/compression/compressor/compressor.h"
 
 #include "qatzip.h"
 
@@ -10,7 +10,7 @@ namespace Compressor {
 /**
  * Implementation of compressor's interface.
  */
-class QatzipCompressorImpl : public Compressor {
+class QatzipCompressorImpl : public Envoy::Compression::Compressor::Compressor {
 public:
   QatzipCompressorImpl(QzSession_T* session);
 
@@ -24,7 +24,7 @@ public:
   virtual ~QatzipCompressorImpl();
 
   // Compressor
-  void compress(Buffer::Instance& buffer, State state) override;
+  void compress(Buffer::Instance& buffer, Envoy::Compression::Compressor::State state) override;
 
 private:
   void process(Buffer::Instance& output_buffer, unsigned int last);

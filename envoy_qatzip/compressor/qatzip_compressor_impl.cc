@@ -4,8 +4,6 @@
 
 #include "common/common/assert.h"
 
-#include "absl/container/fixed_array.h"
-
 namespace Envoy {
 namespace Compressor {
 
@@ -25,13 +23,9 @@ QatzipCompressorImpl::QatzipCompressorImpl(QzSession_T* session, size_t chunk_si
 
 QatzipCompressorImpl::~QatzipCompressorImpl() { qzEndStream(session_, &stream_); }
 
-void QatzipCompressorImpl::compress(Buffer::Instance& buffer, State state) {
+void QatzipCompressorImpl::compress(Buffer::Instance& buffer, Envoy::Compression::Compressor::State state) {
 
-  const uint64_t num_slices = buffer.getRawSlices(nullptr, 0);
-  absl::FixedArray<Buffer::RawSlice> slices(num_slices);
-  buffer.getRawSlices(slices.begin(), num_slices);
-
-  for (const Buffer::RawSlice& input_slice : slices) {
+  for (const Buffer::RawSlice& input_slice : buffer.getRawSlices()) {
     avail_in_ = input_slice.len_;
     stream_.in = static_cast<unsigned char*>(input_slice.mem_);
 
@@ -42,7 +36,7 @@ void QatzipCompressorImpl::compress(Buffer::Instance& buffer, State state) {
     buffer.drain(input_slice.len_);
   }
 
-  if (state == State::Finish) {
+  if (state == Envoy::Compression::Compressor::State::Finish) {
     do {
       process(buffer, 1);
     } while (stream_.pending_out > 0);

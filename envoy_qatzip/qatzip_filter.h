@@ -21,7 +21,7 @@ public:
                      Stats::Scope& scope, Runtime::Loader& runtime,
                      ThreadLocal::SlotAllocator& tls);
 
-  std::unique_ptr<Compressor::Compressor> makeCompressor() override;
+  Envoy::Compression::Compressor::CompressorPtr makeCompressor() override;
 
 private:
   static unsigned int compressionLevelUint(Protobuf::uint32 compression_level);

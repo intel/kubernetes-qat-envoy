@@ -64,7 +64,7 @@ unsigned int QatzipFilterConfig::streamBufferSizeUint(Protobuf::uint32 stream_bu
   return stream_buffer_size > 0 ? stream_buffer_size : DefaultStreamBufferSize;
 }
 
-std::unique_ptr<Compressor::Compressor> QatzipFilterConfig::makeCompressor() {
+Envoy::Compression::Compressor::CompressorPtr QatzipFilterConfig::makeCompressor() {
   return std::make_unique<Compressor::QatzipCompressorImpl>(
       tls_slot_->getTyped<QatzipThreadLocal>().getSession());
 }
