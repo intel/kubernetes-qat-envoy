@@ -39,9 +39,9 @@ ENV HOME /root
 RUN eval $(cut -d = -f 2- < clang.bazelrc) && \
     echo "build:clang --linkopt=-L$($LLVM_CONFIG --libdir)" >> clang.bazelrc && \
     echo "build:clang --linkopt=-Wl,-rpath,$($LLVM_CONFIG --libdir)" >> clang.bazelrc
-RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/2.0.0/bazel-2.0.0-installer-linux-x86_64.sh && \
-    chmod +x bazel-2.0.0-installer-linux-x86_64.sh && \
-    ./bazel-2.0.0-installer-linux-x86_64.sh --user
+RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/3.4.1/bazel-3.4.1-installer-linux-x86_64.sh && \
+    chmod +x bazel-3.4.1-installer-linux-x86_64.sh && \
+    ./bazel-3.4.1-installer-linux-x86_64.sh --user
 
 ARG BAZEL_EXTRA_BUILD_ARGS=
 

@@ -14,7 +14,7 @@ envoy_cc_library(
     hdrs = ["qatzip_compressor_impl.h"],
     repository = "@envoy",
     deps = [
-        "@envoy//include/envoy/compressor:compressor_interface",
+        "@envoy//include/envoy/compression/compressor:compressor_interface",
         "@qatzip",
     ],
 )
