@@ -41,7 +41,6 @@ private:
   QzStream_T stream_;
 
   uint32_t input_len_;
-  std::unique_ptr<unsigned char[]> trailer_;
 };
 
 } // namespace Compressor
