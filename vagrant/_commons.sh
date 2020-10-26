@@ -11,6 +11,7 @@
 set -o pipefail
 set -o xtrace
 set -o nounset
+set -o errexit
 
 # Kubespray configuration values
 kubespray_folder=/opt/kubespray
@@ -38,15 +39,15 @@ function install_docker {
     esac
 
     sudo mkdir -p /etc/systemd/system/docker.service.d
-    if [ -n "$HTTP_PROXY" ]; then
+    if [[ ${HTTP_PROXY+x} = "x" ]]; then
         echo "[Service]" | sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf
         echo "Environment=\"HTTP_PROXY=$HTTP_PROXY\"" | sudo tee --append /etc/systemd/system/docker.service.d/http-proxy.conf
     fi
-    if [ -n "$HTTPS_PROXY" ]; then
+    if [[ ${HTTPS_PROXY+x} = "x" ]]; then
         echo "[Service]" | sudo tee /etc/systemd/system/docker.service.d/https-proxy.conf
         echo "Environment=\"HTTPS_PROXY=$HTTPS_PROXY\"" | sudo tee --append /etc/systemd/system/docker.service.d/https-proxy.conf
     fi
-    if [ -n "$NO_PROXY" ]; then
+    if [[ ${NO_PROXY+x} = "x" ]]; then
         echo "[Service]" | sudo tee /etc/systemd/system/docker.service.d/no-proxy.conf
         echo "Environment=\"NO_PROXY=$NO_PROXY\"" | sudo tee --append /etc/systemd/system/docker.service.d/no-proxy.conf
     fi
@@ -79,7 +80,7 @@ function install_k8s {
         esac
         sudo git clone --depth 1 https://github.com/kubernetes-sigs/kubespray $kubespray_folder -b $kubespray_version
         sudo chown -R "$USER" $kubespray_folder
-        pushd $kubespray_folder
+        pushd "$kubespray_folder"
         sudo -E pip install -r ./requirements.txt
         make mitogen
         popd
@@ -107,15 +108,15 @@ function install_k8s {
             sed -i 's/^kube_version: .*$/kube_version: v1.13.5/' ./inventory/group_vars/k8s-cluster.yml
             # (TODO): https://github.com/kubernetes-sigs/kubespray/pull/4607
             sudo mkdir -p /etc/systemd/system/crio.service.d/
-            if [ -n "$HTTP_PROXY" ]; then
+            if [[ ${HTTP_PROXY+x} = "x" ]]; then
                 echo "[Service]" | sudo tee /etc/systemd/system/crio.service.d/http-proxy.conf
                 echo "Environment=\"HTTP_PROXY=$HTTP_PROXY\"" | sudo tee --append /etc/systemd/system/crio.service.d/http-proxy.conf
             fi
-            if [ -n "$HTTPS_PROXY" ]; then
+            if [[ ${HTTPS_PROXY+x} = "x" ]]; then
                 echo "[Service]" | sudo tee /etc/systemd/system/crio.service.d/https-proxy.conf
                 echo "Environment=\"HTTPS_PROXY=$HTTPS_PROXY\"" | sudo tee --append /etc/systemd/system/crio.service.d/https-proxy.conf
             fi
-            if [ -n "$NO_PROXY" ]; then
+            if [[ ${NO_PROXY+x} = "x" ]]; then
                 echo "[Service]" | sudo tee /etc/systemd/system/crio.service.d/no-proxy.conf
                 echo "Environment=\"NO_PROXY=$NO_PROXY\"" | sudo tee --append /etc/systemd/system/crio.service.d/no-proxy.conf
             fi
