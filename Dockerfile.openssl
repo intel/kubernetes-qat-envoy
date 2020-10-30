@@ -17,8 +17,7 @@ RUN swupd update && \
     llvm9 \
     python3-basic \
     os-core-dev && \
-    git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine && \
-    git clone -b $IPSEC_MB_VERSION https://github.com/intel/intel-ipsec-mb
+    git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine
 
 RUN mkdir QAT_Lib && \
     cd QAT_Lib && \
@@ -58,8 +57,10 @@ RUN git clone -b $IPP_CRYPTO_VERSION https://github.com/intel/ipp-crypto && \
     install -m 755 bin/vfy_ifma_cp_rsa_mb /usr/bin/ && \
     install -m 755 bin/vfy_ifma_rsa_mb /usr/bin/
 
-WORKDIR /intel-ipsec-mb
-RUN make && make install LIB_INSTALL_DIR=/usr/lib64
+RUN git clone -b $IPSEC_MB_VERSION https://github.com/intel/intel-ipsec-mb && \
+    cd /intel-ipsec-mb && \
+    make && \
+    make install LIB_INSTALL_DIR=/usr/lib64
 
 WORKDIR /QAT_Engine
 RUN ./autogen.sh && \
