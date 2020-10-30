@@ -72,13 +72,12 @@ RUN git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine && \
     make && \
     make install
 
-WORKDIR /
-
-COPY . .
-
 ARG BAZEL_EXTRA_BUILD_ARGS="-c opt"
 
-RUN bazel build $BAZEL_EXTRA_BUILD_ARGS //:envoy
+COPY . /envoy-qat
+
+RUN cd /envoy-qat && \
+    CC=clang CXX=clang++ bazel build $BAZEL_EXTRA_BUILD_ARGS //:envoy
 
 FROM clearlinux:base
 
@@ -92,7 +91,7 @@ COPY --from=builder /usr/bin/vfy_ifma_cp_rsa_mb /usr/bin
 COPY --from=builder /usr/bin/vfy_ifma_rsa_mb /usr/bin
 COPY --from=builder /usr/lib64/engines-1.1/avx512.so /usr/lib64/engines-1.1/avx512.so
 COPY --from=builder /usr/lib64/engines-1.1/qat.so /usr/lib64/engines-1.1
-COPY --from=builder /bazel-bin/envoy /envoy-static
+COPY --from=builder /envoy-qat/bazel-bin/envoy /envoy-static
 COPY --from=builder /QAT_Lib/LICENSE.GPL /usr/share/package-licenses/libqat/LICENSE.GPL
 COPY --from=builder /QAT_Engine/LICENSE /usr/share/package-licenses/QAT_Engine/LICENSE
 COPY --from=builder /ipp-crypto/LICENSE /usr/share/package-licenses/ipp-crypto/LICENSE
