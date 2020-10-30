@@ -16,8 +16,7 @@ RUN swupd update && \
     git \
     llvm9 \
     python3-basic \
-    os-core-dev && \
-    git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine
+    os-core-dev
 
 RUN mkdir QAT_Lib && \
     cd QAT_Lib && \
@@ -62,26 +61,30 @@ RUN git clone -b $IPSEC_MB_VERSION https://github.com/intel/intel-ipsec-mb && \
     make && \
     make install LIB_INSTALL_DIR=/usr/lib64
 
-WORKDIR /QAT_Engine
-RUN ./autogen.sh && \
+RUN git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine && \
+    cd /QAT_Engine && \
+    ./autogen.sh && \
     ./configure \
-    --enable-ipsec_offload \
-    --enable-multibuff_offload \
-    --with-openssl_install_dir=/usr/lib64 \
-    --with-multibuff_install_dir=/usr/local \
-    --enable-openssl_install_build_arch_path && \
+        --enable-ipsec_offload \
+        --enable-multibuff_offload \
+        --with-openssl_install_dir=/usr/lib64 \
+        --with-multibuff_install_dir=/usr/local \
+        --enable-openssl_install_build_arch_path && \
     sed -i -e 's:^\(const char \*engine_qat_id = \).*:\1"avx512";:' e_qat.c && \
-    make && make install && \
+    make && \
+    make install && \
     mv /usr/lib64/engines-1.1/qat.so /usr/lib64/engines-1.1/avx512.so && \
-    make clean && git restore e_qat.c && \
+    make clean && \
+    git restore e_qat.c && \
     ./configure \
-    --with-qat_dir=/QAT_Lib \
-    --disable-ipsec_offload \
-    --disable-multibuff_offload \
-    --with-openssl_install_dir=/usr/lib64 \
-    --with-qat_install_dir=/usr/lib \
-    --enable-openssl_install_build_arch_path && \
-    make && make install
+        --with-qat_dir=/QAT_Lib \
+        --disable-ipsec_offload \
+        --disable-multibuff_offload \
+        --with-openssl_install_dir=/usr/lib64 \
+        --with-qat_install_dir=/usr/lib \
+        --enable-openssl_install_build_arch_path && \
+    make && \
+    make install
 
 FROM clearlinux:base
 
