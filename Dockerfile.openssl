@@ -6,17 +6,15 @@ ARG IPSEC_MB_VERSION="v0.54"
 ARG IPP_CRYPTO_VERSION="ippcp_2020u2"
 
 RUN swupd update && \
-    swupd bundle-add \
-    --skip-diskspace-check \
-    --no-boot-update \
-    devpkg-systemd \
-    devpkg-openssl \
-    c-basic \
-    curl \
-    git \
-    llvm9 \
-    python3-basic \
-    os-core-dev
+    swupd bundle-add --skip-diskspace-check --no-boot-update \
+        os-core-dev \
+        c-basic \
+        llvm9 \
+        curl \
+        git \
+        python3-basic \
+        devpkg-systemd \
+        devpkg-openssl
 
 RUN mkdir QAT_Lib && \
     cd QAT_Lib && \
