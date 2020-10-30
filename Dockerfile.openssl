@@ -5,6 +5,8 @@ ARG QAT_ENGINE_VERSION="v0.5.46"
 ARG IPSEC_MB_VERSION="v0.54"
 ARG IPP_CRYPTO_VERSION="ippcp_2020u2"
 
+ARG BAZELISK_VERSION="v1.6.1"
+
 RUN swupd update && \
     swupd bundle-add --skip-diskspace-check --no-boot-update \
         os-core-dev \
@@ -14,7 +16,9 @@ RUN swupd update && \
         git \
         python3-basic \
         devpkg-systemd \
-        devpkg-openssl
+        devpkg-openssl && \
+    curl -fsSL --output /usr/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-amd64 && \
+    chmod +x /usr/bin/bazel
 
 RUN mkdir QAT_Lib && \
     cd QAT_Lib && \
@@ -34,13 +38,10 @@ ENV HOME /root
 RUN eval $(cut -d = -f 2- < clang.bazelrc) && \
     echo "build:clang --linkopt=-L$($LLVM_CONFIG --libdir)" >> clang.bazelrc && \
     echo "build:clang --linkopt=-Wl,-rpath,$($LLVM_CONFIG --libdir)" >> clang.bazelrc
-RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/3.4.1/bazel-3.4.1-installer-linux-x86_64.sh && \
-    chmod +x bazel-3.4.1-installer-linux-x86_64.sh && \
-    ./bazel-3.4.1-installer-linux-x86_64.sh --user
 
 ARG BAZEL_EXTRA_BUILD_ARGS=
 
-RUN /root/.bazel/bin/bazel build -c opt $BAZEL_EXTRA_BUILD_ARGS //:envoy --host_force_python=PY3
+RUN bazel build -c opt $BAZEL_EXTRA_BUILD_ARGS //:envoy --host_force_python=PY3
 
 RUN git clone -b $IPP_CRYPTO_VERSION https://github.com/intel/ipp-crypto && \
     cd /ipp-crypto/sources/ippcp/crypto_mb && \
