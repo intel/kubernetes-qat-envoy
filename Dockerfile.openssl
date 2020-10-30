@@ -83,7 +83,7 @@ COPY . .
 
 ARG BAZEL_EXTRA_BUILD_ARGS=
 
-RUN bazel build -c opt $BAZEL_EXTRA_BUILD_ARGS //:envoy --host_force_python=PY3
+RUN bazel build -c opt $BAZEL_EXTRA_BUILD_ARGS //:envoy
 
 FROM clearlinux:base
 
