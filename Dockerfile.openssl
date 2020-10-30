@@ -18,7 +18,6 @@ RUN swupd update && \
     python3-basic \
     os-core-dev && \
     git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine && \
-    git clone -b $IPP_CRYPTO_VERSION https://github.com/intel/ipp-crypto && \
     git clone -b $IPSEC_MB_VERSION https://github.com/intel/intel-ipsec-mb
 
 RUN mkdir QAT_Lib && \
@@ -47,14 +46,15 @@ ARG BAZEL_EXTRA_BUILD_ARGS=
 
 RUN /root/.bazel/bin/bazel build -c opt $BAZEL_EXTRA_BUILD_ARGS //:envoy --host_force_python=PY3
 
-WORKDIR /ipp-crypto/sources/ippcp/crypto_mb
-
-RUN cmake . -B"../build" \
-    -DOPENSSL_INCLUDE_DIR=/usr/include/openssl \
-    -DOPENSSL_LIBRARIES=/usr/lib64 \
-    -DOPENSSL_ROOT_DIR=/usr/bin/openssl && \
+RUN git clone -b $IPP_CRYPTO_VERSION https://github.com/intel/ipp-crypto && \
+    cd /ipp-crypto/sources/ippcp/crypto_mb && \
+    cmake -B ../build \
+        -DOPENSSL_ROOT_DIR=/usr/bin/openssl \
+        -DOPENSSL_INCLUDE_DIR=/usr/include/openssl \
+        -DOPENSSL_LIBRARIES=/usr/lib64 && \
     cd ../build && \
-    make crypto_mb && make install && \
+    make crypto_mb && \
+    make install && \
     install -m 755 bin/vfy_ifma_cp_rsa_mb /usr/bin/ && \
     install -m 755 bin/vfy_ifma_rsa_mb /usr/bin/
 
