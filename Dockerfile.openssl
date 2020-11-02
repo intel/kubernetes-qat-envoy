@@ -30,18 +30,10 @@ RUN mkdir QAT_Lib && \
     install -m 755 build/libusdm_drv_s.so /usr/lib/ && \
     install -m 755 build/adf_ctl /usr/bin/
 
-WORKDIR /
-
-COPY . .
-
 ENV HOME /root
 RUN eval $(cut -d = -f 2- < clang.bazelrc) && \
     echo "build:clang --linkopt=-L$($LLVM_CONFIG --libdir)" >> clang.bazelrc && \
     echo "build:clang --linkopt=-Wl,-rpath,$($LLVM_CONFIG --libdir)" >> clang.bazelrc
-
-ARG BAZEL_EXTRA_BUILD_ARGS=
-
-RUN bazel build -c opt $BAZEL_EXTRA_BUILD_ARGS //:envoy --host_force_python=PY3
 
 RUN git clone -b $IPP_CRYPTO_VERSION https://github.com/intel/ipp-crypto && \
     cd /ipp-crypto/sources/ippcp/crypto_mb && \
@@ -84,6 +76,14 @@ RUN git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine && \
         --enable-openssl_install_build_arch_path && \
     make && \
     make install
+
+WORKDIR /
+
+COPY . .
+
+ARG BAZEL_EXTRA_BUILD_ARGS=
+
+RUN bazel build -c opt $BAZEL_EXTRA_BUILD_ARGS //:envoy --host_force_python=PY3
 
 FROM clearlinux:base
 
