@@ -81,9 +81,9 @@ WORKDIR /
 
 COPY . .
 
-ARG BAZEL_EXTRA_BUILD_ARGS=
+ARG BAZEL_EXTRA_BUILD_ARGS="-c opt"
 
-RUN bazel build -c opt $BAZEL_EXTRA_BUILD_ARGS //:envoy
+RUN bazel build $BAZEL_EXTRA_BUILD_ARGS //:envoy
 
 FROM clearlinux:base
 
