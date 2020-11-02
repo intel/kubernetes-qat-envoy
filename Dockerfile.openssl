@@ -11,7 +11,7 @@ RUN swupd update && \
     swupd bundle-add --skip-diskspace-check --no-boot-update \
         os-core-dev \
         c-basic \
-        llvm9 \
+        llvm10 \
         curl \
         git \
         python3-basic \
@@ -29,11 +29,6 @@ RUN mkdir QAT_Lib && \
     install -m 755 build/libqat_s.so /usr/lib/ && \
     install -m 755 build/libusdm_drv_s.so /usr/lib/ && \
     install -m 755 build/adf_ctl /usr/bin/
-
-ENV HOME /root
-RUN eval $(cut -d = -f 2- < clang.bazelrc) && \
-    echo "build:clang --linkopt=-L$($LLVM_CONFIG --libdir)" >> clang.bazelrc && \
-    echo "build:clang --linkopt=-Wl,-rpath,$($LLVM_CONFIG --libdir)" >> clang.bazelrc
 
 RUN git clone -b $IPP_CRYPTO_VERSION https://github.com/intel/ipp-crypto && \
     cd /ipp-crypto/sources/ippcp/crypto_mb && \
