@@ -1,4 +1,0 @@
-build:clang --action_env=CC=clang-9
-build:clang --action_env=CXX=clang++-9
-build:clang --action_env=LLVM_CONFIG=llvm-config-9
-build:clang --repo_env=LLVM_CONFIG=llvm-config-9
