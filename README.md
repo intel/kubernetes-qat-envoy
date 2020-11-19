@@ -89,7 +89,7 @@ You should expect to see the Nginx*-provided web page source.
 
 Edit the `tests/k6-testing-config-docker.js` file to set the test parameters.  You can among other things select the cipher suite in the file. At least replace the port `9000` in the URL with the NodePort value.  Then run the benchmark:
 
-    # docker run --net=host -i loadimpact/k6:master run --vus 10 --duration 20s -< tests/k6-testing-config-docker.js
+    # docker run --net=host -i loadimpact/k6 run --vus 10 --duration 20s -< tests/k6-testing-config-docker.js
 
 To run benchmarks against non-accelerated setup apply this deployment config and run the benchmark again (after waiting for a few moments for the Pod to restart):
 
