@@ -1,8 +1,6 @@
 syntax = "proto3";
 
-package qatzip;
-
-import "envoy/extensions/filters/http/compressor/v3/compressor.proto";
+package qatzip.compressor;
 
 import "google/protobuf/wrappers.proto";
 
@@ -37,8 +35,6 @@ message Qatzip {
   google.protobuf.UInt32Value stream_buffer_size = 4
       [(validate.rules).uint32 = {gte: 1024, lte: 2092032}];
 
-  // Set of configuration parameters common for all compression filters. If this field is set then
-  // the fields `content_length`, `content_type`, `disable_on_etag_header` and
-  // `remove_accept_encoding_header` are ignored.
-  envoy.extensions.filters.http.compressor.v3.Compressor compressor = 5;
+  // Value for compressor's next output buffer. If not set, defaults to 4096.
+  google.protobuf.UInt32Value chunk_size = 5 [(validate.rules).uint32 = {lte: 65536 gte: 4096}];
 }

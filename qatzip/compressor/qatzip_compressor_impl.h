@@ -5,6 +5,9 @@
 #include "qatzip.h"
 
 namespace Envoy {
+namespace Extensions {
+namespace Compression {
+namespace Qatzip {
 namespace Compressor {
 
 /**
@@ -38,8 +41,10 @@ private:
   QzStream_T stream_;
 
   uint32_t input_len_;
-  std::unique_ptr<unsigned char[]> trailer_;
 };
 
 } // namespace Compressor
+} // namespace Qatzip
+} // namespace Compression
+} // namespace Extensions
 } // namespace Envoy

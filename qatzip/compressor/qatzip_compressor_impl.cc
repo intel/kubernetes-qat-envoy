@@ -1,10 +1,13 @@
-#include "envoy_qatzip/compressor/qatzip_compressor_impl.h"
+#include "qatzip/compressor/qatzip_compressor_impl.h"
 
 #include <memory>
 
 #include "common/common/assert.h"
 
 namespace Envoy {
+namespace Extensions {
+namespace Compression {
+namespace Qatzip {
 namespace Compressor {
 
 QatzipCompressorImpl::QatzipCompressorImpl(QzSession_T* session)
@@ -13,8 +16,7 @@ QatzipCompressorImpl::QatzipCompressorImpl(QzSession_T* session)
 // TODO(rojkov): add lower limit to chunk_size in proto definition.
 QatzipCompressorImpl::QatzipCompressorImpl(QzSession_T* session, size_t chunk_size)
     : chunk_size_{chunk_size}, avail_out_{chunk_size-10},
-      chunk_char_ptr_(new unsigned char[chunk_size]), session_{session}, stream_{}, input_len_(0),
-      trailer_(new unsigned char[8]) {
+      chunk_char_ptr_(new unsigned char[chunk_size]), session_{session}, stream_{}, input_len_(0) {
   RELEASE_ASSERT(session_ != nullptr,
                  "QATzip compressor must be created with non-null QATzip session");
   static unsigned char gzheader[10] = { 0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 0, 3 };
@@ -45,17 +47,8 @@ void QatzipCompressorImpl::compress(Buffer::Instance& buffer, Envoy::Compression
     if (n_output > 0) {
       buffer.add(static_cast<void*>(chunk_char_ptr_.get()), n_output);
     }
-
-    trailer_[0] = static_cast<unsigned char>((stream_.crc_32 >> 0) & 0xff);
-    trailer_[1] = static_cast<unsigned char>((stream_.crc_32 >> 8) & 0xff);
-    trailer_[2] = static_cast<unsigned char>((stream_.crc_32 >> 16) & 0xff);
-    trailer_[3] = static_cast<unsigned char>((stream_.crc_32 >> 24) & 0xff);
-
-    trailer_[4] = static_cast<unsigned char>((input_len_ >> 0) & 0xff);
-    trailer_[5] = static_cast<unsigned char>((input_len_ >> 8) & 0xff);
-    trailer_[6] = static_cast<unsigned char>((input_len_ >> 16) & 0xff);
-    trailer_[7] = static_cast<unsigned char>((input_len_ >> 24) & 0xff);
-    buffer.add(static_cast<void*>(trailer_.get()), 8);
+    buffer.writeBEInt<uint32_t>(stream_.crc_32);
+    buffer.writeBEInt<uint32_t>(input_len_);
   }
 }
 
@@ -82,4 +75,7 @@ void QatzipCompressorImpl::process(Buffer::Instance& output_buffer, unsigned int
 }
 
 } // namespace Compressor
+} // namespace Qatzip
+} // namespace Compression
+} // namespace Extensions
 } // namespace Envoy
