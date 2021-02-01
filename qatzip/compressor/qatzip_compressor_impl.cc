@@ -1,8 +1,8 @@
-#include "qatzip/compressor/qatzip_compressor_impl.h"
-
 #include <memory>
 
 #include "common/common/assert.h"
+
+#include "qatzip/compressor/qatzip_compressor_impl.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -15,17 +15,18 @@ QatzipCompressorImpl::QatzipCompressorImpl(QzSession_T* session)
 
 // TODO(rojkov): add lower limit to chunk_size in proto definition.
 QatzipCompressorImpl::QatzipCompressorImpl(QzSession_T* session, size_t chunk_size)
-    : chunk_size_{chunk_size}, avail_out_{chunk_size-10},
+    : chunk_size_{chunk_size}, avail_out_{chunk_size - 10},
       chunk_char_ptr_(new unsigned char[chunk_size]), session_{session}, stream_{}, input_len_(0) {
   RELEASE_ASSERT(session_ != nullptr,
                  "QATzip compressor must be created with non-null QATzip session");
-  static unsigned char gzheader[10] = { 0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 0, 3 };
+  static unsigned char gzheader[10] = {0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 0, 3};
   stream_.out = static_cast<unsigned char*>(mempcpy(chunk_char_ptr_.get(), gzheader, 10));
 }
 
 QatzipCompressorImpl::~QatzipCompressorImpl() { qzEndStream(session_, &stream_); }
 
-void QatzipCompressorImpl::compress(Buffer::Instance& buffer, Envoy::Compression::Compressor::State state) {
+void QatzipCompressorImpl::compress(Buffer::Instance& buffer,
+                                    Envoy::Compression::Compressor::State state) {
 
   for (const Buffer::RawSlice& input_slice : buffer.getRawSlices()) {
     avail_in_ = input_slice.len_;

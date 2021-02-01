@@ -30,13 +30,13 @@ envoy_cc_extension(
     name = "config",
     srcs = ["config.cc"],
     hdrs = ["config.h"],
-    security_posture = "robust_to_untrusted_downstream",
     repository = "@envoy",
+    security_posture = "robust_to_untrusted_downstream",
     deps = [
         ":compressor_lib",
-		":qatzip_cc_proto",
-        "@envoy//source/common/http:headers_lib",
+        ":qatzip_cc_proto",
         "@envoy//include/envoy/compression/compressor:compressor_config_interface",
         "@envoy//include/envoy/compression/compressor:compressor_factory_interface",
+        "@envoy//source/common/http:headers_lib",
     ],
 )

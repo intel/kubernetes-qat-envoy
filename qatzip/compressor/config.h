@@ -1,10 +1,10 @@
 #pragma once
 
-#include "common/http/headers.h"
-
-#include "envoy/compression/compressor/factory.h"
 #include "envoy/compression/compressor/config.h"
+#include "envoy/compression/compressor/factory.h"
 #include "envoy/thread_local/thread_local.h"
+
+#include "common/http/headers.h"
 
 #include "qatzip/compressor/qatzip.pb.h"
 #include "qatzip/compressor/qatzip.pb.validate.h"
@@ -27,8 +27,8 @@ const std::string& qatzipExtensionName() {
 
 class QatzipCompressorFactory : public Envoy::Compression::Compressor::CompressorFactory {
 public:
-  QatzipCompressorFactory(
-      const qatzip::compressor::Qatzip& qatzip, Server::Configuration::FactoryContext& context);
+  QatzipCompressorFactory(const qatzip::compressor::Qatzip& qatzip,
+                          Server::Configuration::FactoryContext& context);
 
   // Envoy::Compression::Compressor::CompressorFactory
   Envoy::Compression::Compressor::CompressorPtr createCompressor() override;
@@ -61,8 +61,9 @@ public:
   createCompressorFactoryFromProto(const Protobuf::Message& proto_config,
                                    Server::Configuration::FactoryContext& context) override {
     return createCompressorFactoryFromProtoTyped(
-        MessageUtil::downcastAndValidate<const qatzip::compressor::Qatzip&>(proto_config,
-                                                             context.messageValidationVisitor()), context);
+        MessageUtil::downcastAndValidate<const qatzip::compressor::Qatzip&>(
+            proto_config, context.messageValidationVisitor()),
+        context);
   }
 
   ProtobufTypes::MessagePtr createEmptyConfigProto() override {
@@ -72,8 +73,9 @@ public:
   std::string name() const override { return name_; }
 
 private:
-  Envoy::Compression::Compressor::CompressorFactoryPtr createCompressorFactoryFromProtoTyped(
-      const qatzip::compressor::Qatzip& config, Server::Configuration::FactoryContext& context);
+  Envoy::Compression::Compressor::CompressorFactoryPtr
+  createCompressorFactoryFromProtoTyped(const qatzip::compressor::Qatzip& config,
+                                        Server::Configuration::FactoryContext& context);
 
   const std::string name_;
 };
