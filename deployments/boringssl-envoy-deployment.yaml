@@ -32,20 +32,24 @@ data:
             address: 0.0.0.0
             port_value: 9000
         filter_chains:
-          tls_context:
-            common_tls_context:
-              tls_certificates:
-                certificate_chain: { "filename": "/etc/envoy/tls/tls.crt" }
-                private_key_provider:
-                  provider_name: qat
-                  typed_config:
-                    "@type": "type.googleapis.com/envoy.extensions.private_key_providers.qat.v3.QatPrivateKeyMethodConfig"
-                    section_name: ${QAT_SECTION_NAME}
-                    poll_delay: ${POLL_DELAY}
-                    private_key: "/etc/envoy/tls/tls.key"
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+              common_tls_context:
+                tls_certificates:
+                  certificate_chain: { "filename": "/etc/envoy/tls/tls.crt" }
+                  private_key_provider:
+                    provider_name: qat
+                    typed_config:
+                      "@type": "type.googleapis.com/envoy.extensions.private_key_operations_providers.qat.v3.QatPrivateKeyMethodConfig"
+                      section_name: ${QAT_SECTION_NAME}
+                      poll_delay: ${POLL_DELAY}
+                      private_key: "/etc/envoy/tls/tls.key"
           filters:
           - name: envoy.http_connection_manager
-            config:
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
               codec_type: auto
               stat_prefix: ingress_http
               route_config:
@@ -59,7 +63,7 @@ data:
                     direct_response: { status: 200 }
               http_filters:
               - name: envoy.router
-                config: {}
+                typed_config: {}
     admin:
       access_log_path: "/dev/null"
       address:

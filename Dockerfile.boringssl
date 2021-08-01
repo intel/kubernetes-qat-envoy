@@ -23,20 +23,21 @@ RUN mkdir /install_root \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
-RUN swupd bundle-add os-core-dev c-basic python3-basic
+# GCC11 does not work with Envoy and we need to use GCC10.
+RUN swupd bundle-add os-core-dev c-extras-gcc10 python3-basic
 
 # for installing bazel as user
 ENV HOME /root
 
 # bazel 3.4 is not packaged to Clear Linux yet, change to that bundle when it is
-RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/3.4.1/bazel-3.4.1-installer-linux-x86_64.sh
-RUN chmod +x bazel-3.4.1-installer-linux-x86_64.sh
-RUN ./bazel-3.4.1-installer-linux-x86_64.sh --user
+RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/4.1.0/bazel-4.1.0-installer-linux-x86_64.sh
+RUN chmod +x bazel-4.1.0-installer-linux-x86_64.sh
+RUN ./bazel-4.1.0-installer-linux-x86_64.sh --user
 
-RUN git clone --recurse-submodules --single-branch --branch v1.15.0-qat1 https://github.com/ipuustin/envoy.git envoy
+RUN git clone --recurse-submodules --single-branch --branch qat-provider-main-v5 https://github.com/ipuustin/envoy.git envoy
 
 # build and install Envoy
-RUN cd envoy && /root/.bazel/bin/bazel build --copt="-Wno-uninitialized" --copt="-Wno-maybe-uninitialized" --copt="-Wno-stringop-truncation" --verbose_failures -c opt -s //source/exe:envoy-static --extra_toolchains=@rules_python//python:autodetecting_toolchain_nonstrict \
+RUN cd envoy && CC=gcc-10 CXX=g++-10 /root/.bazel/bin/bazel build --copt="-Wno-uninitialized" --copt="-Wno-maybe-uninitialized" --copt="-Wno-stringop-truncation" --verbose_failures -c opt -s //source/exe:envoy-static --extra_toolchains=@rules_python//python:autodetecting_toolchain_nonstrict \
     && install -D /envoy/LICENSE /install_root/usr/local/share/package-licenses/envoy/LICENSE \
     && install -D /envoy/bazel-bin/source/exe/envoy-static /install_root/usr/local/bin/envoy-static
 
