@@ -73,7 +73,7 @@ data:
     [ engine_section ]
     qat = qat_section
     [ qat_section ]
-    engine_id = qat
+    engine_id = qat-hw # Change "qat-hw" into "qat-sw" if you want to benefit from CPU acceleration.
     default_algorithms = ALL
 ---
 apiVersion: apps/v1
