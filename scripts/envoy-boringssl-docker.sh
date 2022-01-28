@@ -28,4 +28,4 @@ if [[ ! -f "${BASE_DIR}"/cert.pem || ! -f "${BASE_DIR}"/key.pem ]]; then
   openssl req -x509 -new -batch -nodes -subj '/CN=localhost' -keyout "${BASE_DIR}"/key.pem -out "${BASE_DIR}"/cert.pem
 fi
 
-docker run --rm -ti -p 9000:9000 $CPUSET_PARAM --security-opt seccomp=unconfined --security-opt apparmor=unconfined $DEVS_PARAM --cap-add=SYS_ADMIN --cap-add=IPC_LOCK -v "${BASE_DIR}"/cert.pem:/etc/envoy/tls/tls.crt -v "${BASE_DIR}"/key.pem:/etc/envoy/tls/tls.key -v $CONFIG_FILE_PARAM:/etc/envoy/config/envoy-conf.yaml -v /dev/hugepages/qat:/dev/hugepages/qat envoy-boringssl-qat:devel --cpuset-threads
+docker run --rm -ti -p 9000:9000 $CPUSET_PARAM --security-opt seccomp=unconfined --security-opt apparmor=unconfined $DEVS_PARAM --cap-add=SYS_ADMIN --cap-add=IPC_LOCK -v "${BASE_DIR}"/cert.pem:/etc/envoy/tls/tls.crt -v "${BASE_DIR}"/key.pem:/etc/envoy/tls/tls.key -v $CONFIG_FILE_PARAM:/etc/envoy/config/envoy-conf.yaml -v /dev/hugepages/qat:/dev/hugepages/qat envoy-qat:devel --cpuset-threads

@@ -89,7 +89,7 @@ spec:
     spec:
       containers:
         - name: envoy
-          image: envoy-boringssl-qat:devel
+          image: envoy-qat:devel
           securityContext:
             privileged: true
           imagePullPolicy: IfNotPresent

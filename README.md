@@ -11,7 +11,7 @@ This is a technical guide for getting Intel Quick Assist Technology (QAT) accele
 
 ## Create a container for QAT-accelerated Envoy
 
-    # docker image build -t envoy-qat:devel -f Dockerfile.openssl .
+    # docker image build -t envoy-qat:devel -f Dockerfile.boringssl .
 
 Add the image to the Docker registry where all nodes in your cluster can find it. If you load the image to the Docker image cache on all nodes, you can skip this step. The exact commands depend on the Docker infrastructure you have.
 
@@ -113,11 +113,7 @@ Then delete the job:
 
 ## Envoy using BoringSSL QAT private key provider
 
-You can also build a version of Envoy using the BoringSSL QAT private key provider:
-
-    # docker image build -t envoy-boringssl-qat:devel -f Dockerfile.boringssl .
-
-To test that everything works, run the new container:
+To test that QAT works, run the new container:
 
     $ scripts/envoy-boringssl-docker.sh
 
