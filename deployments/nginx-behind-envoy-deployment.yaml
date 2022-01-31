@@ -118,7 +118,7 @@ spec:
               value: "2000000"
           resources:
             limits:
-              qat.intel.com/cy1_dc0: 1
+              qat.intel.com/generic: 1
               cpu: 2
               memory: "2G"
             requests:
