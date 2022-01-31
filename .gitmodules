@@ -6,7 +6,3 @@
 	path = intel-device-plugins-for-kubernetes
 	url = https://github.com/intel/intel-device-plugins-for-kubernetes.git
 	branch = master
-[submodule "envoy-openssl"]
-	path = envoy-openssl
-	url = https://github.com/envoyproxy/envoy-openssl.git
-	branch = master

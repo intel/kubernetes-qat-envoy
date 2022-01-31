@@ -31,7 +31,13 @@ data:
             common_tls_context:
               tls_certificates:
                 certificate_chain: { "filename": "/etc/envoy/tls/tls.crt" }
-                private_key: { "filename": "/etc/envoy/tls/tls.key" }
+                private_key_provider:
+                  provider_name: qat
+                  typed_config:
+                    "@type": "type.googleapis.com/envoy.extensions.private_key_operations_providers.qat.v3.QatPrivateKeyMethodConfig"
+                    section_name: ${QAT_SECTION_NAME}
+                    poll_delay: ${POLL_DELAY}
+                    private_key: "/etc/envoy/tls/tls.key"
           filters:
           - name: envoy.http_connection_manager
             config:
@@ -66,15 +72,6 @@ data:
         socket_address:
           address: 0.0.0.0
           port_value: 9001
-  openssl.cnf: |
-    openssl_conf = openssl_init
-    [ openssl_init ]
-    engines = engine_section
-    [ engine_section ]
-    qat = qat_section
-    [ qat_section ]
-    engine_id = qat-hw # Change "qat-hw" into "qat-sw" if you want to benefit from CPU acceleration.
-    default_algorithms = ALL
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -115,8 +112,10 @@ spec:
             - "/etc/envoy/config/envoy-conf.yaml"
             - "--cpuset-threads"
           env:
-            - name: OPENSSL_CONF
-              value: /etc/envoy/config/openssl.cnf
+            - name: "QAT_SECTION_NAME"
+              value: "SHIM"
+            - name: "POLL_DELAY"
+              value: "2000000"
           resources:
             limits:
               qat.intel.com/cy1_dc0: 1
