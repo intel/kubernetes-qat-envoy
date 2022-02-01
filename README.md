@@ -52,19 +52,11 @@ Create a Kubernetes* secret out of the certificate and the key:
 
     $ kubectl create secret tls envoy-tls-secret --cert cert.pem --key key.pem
 
-## Create QAT Device Plugin daemonset
+## Install QAT Device Plugin
 
-    $ cd intel-device-plugins-for-kubernetes
-    # make intel-qat-plugin EXTRA_BUILD_ARGS="--build-arg TAGS_KERNELDRV=kerneldrv" # this builds a docker image with the plugin
-    $ cd ..
-
-Again, you’ll need to make sure that the Docker image is available on all nodes.
-
-    $ kubectl apply -f ./intel-device-plugins-for-kubernetes/deployments/qat_plugin/base/qat_plugin_kernel_mode.yaml
-
-Make sure the QAT kernel driver is configured properly on the node. The exact steps depend on your hardware. The instructions in this document have been tested with C62x chipset QAT accelerator. For this hardware, copy the content of `configs/c6xx_devX.conf` to the node as `/etc/c6xx_dev0.conf`, `/etc/c6xx_dev1.conf` and `/etc/c6xx_dev2.conf`. After that restart the QAT driver on the node:
-
-    # adf_ctl restart
+Follow the instructions at
+https://github.com/intel/intel-device-plugins-for-kubernetes/tree/main/cmd/qat_plugin
+to install the latest release image of Kubernetes* QAT Device Plugin. 
 
 ## Apply the Nginx* and Envoy* deployment
 
