@@ -34,10 +34,10 @@ data:
                 private_key_provider:
                   provider_name: qat
                   typed_config:
-                    "@type": "type.googleapis.com/envoy.extensions.private_key_operations_providers.qat.v3.QatPrivateKeyMethodConfig"
+                    "@type": "type.googleapis.com/envoy.extensions.private_key_providers.qat.v3alpha.QatPrivateKeyMethodConfig"
                     section_name: ${QAT_SECTION_NAME}
                     poll_delay: ${POLL_DELAY}
-                    private_key: "/etc/envoy/tls/tls.key"
+                    private_key: { filename: "/etc/envoy/tls/tls.key" }
           filters:
           - name: envoy.http_connection_manager
             config:
@@ -55,7 +55,7 @@ data:
                     route:
                       cluster: local_service
               http_filters:
-              - name: envoy.router
+              - name: envoy.filters.http.router
                 config: {}
       clusters:
       - name: local_service
