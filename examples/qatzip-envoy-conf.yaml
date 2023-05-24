@@ -21,7 +21,7 @@ static_resources:
     name: listener_0
     address:
       socket_address:
-        address: 127.0.0.1
+        address: 0.0.0.0
         port_value: 10000
     filter_chains:
       filters:
@@ -39,11 +39,17 @@ static_resources:
               - match:
                   prefix: "/"
                 route:
+                  timeout: 300s
                   cluster: cluster_0
           http_filters:
-          - name: envoy.qatzip
-            config:
-              compressor:
-                content_length: 48
+          - name: envoy.filters.http.compressor
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.compressor.v3.Compressor
+              content_length: 48
+              compressor_library:
+                name: testqat
+                typed_config:
+                  "@type": type.googleapis.com/qatzip.compressor.Qatzip
+                  hardware_buffer_size: sz_8k
           - name: envoy.filters.http.router
             config: {}
