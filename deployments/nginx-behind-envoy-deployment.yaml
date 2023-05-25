@@ -27,20 +27,24 @@ data:
             address: 0.0.0.0
             port_value: 9000
         filter_chains:
-          tls_context:
-            common_tls_context:
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+             "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext            
+             common_tls_context:
               tls_certificates:
                 certificate_chain: { "filename": "/etc/envoy/tls/tls.crt" }
                 private_key_provider:
                   provider_name: qat
                   typed_config:
                     "@type": "type.googleapis.com/envoy.extensions.private_key_providers.qat.v3alpha.QatPrivateKeyMethodConfig"
-                    section_name: ${QAT_SECTION_NAME}
-                    poll_delay: ${POLL_DELAY}
+                    section_name: SHIM 
+                    poll_delay: 0.005s
                     private_key: { filename: "/etc/envoy/tls/tls.key" }
           filters:
           - name: envoy.http_connection_manager
-            config:
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager  
               codec_type: auto
               stat_prefix: ingress_http
               route_config:
@@ -56,16 +60,22 @@ data:
                       cluster: local_service
               http_filters:
               - name: envoy.filters.http.router
-                config: {}
+                typed_config: {}
       clusters:
       - name: local_service
         connect_timeout: 0.25s
         type: STATIC
         lb_policy: round_robin
-        hosts:
-        - socket_address:
-            address: 127.0.0.1
-            port_value: 80
+        http2_protocol_options: {}
+        load_assignment:
+          cluster_name: local_service
+          endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address: 
+                  socket_address:
+                    address: 127.0.0.1
+                    port_value: 80
     admin:
       access_log_path: "/dev/null"
       address:
@@ -106,22 +116,18 @@ spec:
             capabilities:
               add: ["IPC_LOCK"]
           command:
-            - "/envoy-static"
+            - "/usr/local/bin/envoy-static"
           args:
             - "-c"
             - "/etc/envoy/config/envoy-conf.yaml"
             - "--cpuset-threads"
-          env:
-            - name: "QAT_SECTION_NAME"
-              value: "SHIM"
-            - name: "POLL_DELAY"
-              value: "2000000"
           resources:
             limits:
-              qat.intel.com/generic: 1
+              qat.intel.com/cy2_dc2: 1
               cpu: 2
               memory: "2G"
             requests:
+              qat.intel.com/cy2_dc2: 1 
               cpu: 2
               memory: "2G"
           ports:
@@ -140,4 +146,5 @@ spec:
         - name: config
           configMap:
             name: envoy-sidecar-config
+
 
